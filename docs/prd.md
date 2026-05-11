@@ -1,59 +1,49 @@
-# Product Requirements Document (PRD) - RPG Classic (Final Fantasy Style)
+# Product Requirements Document (PRD) - RPG Classic (Pygame)
 
-## 1. Project Overview
-A 2D top-down RPG built in Python with Pygame, focusing on classic mechanical progression, class-based growth, and a tactical ATB combat system.
+## Problem Statement
+The project lacks a centralized, formal definition of its features and requirements, which is essential for maintaining architectural consistency as development progresses. A modular and robust foundation for core RPG mechanics (Attributes, Classes, Combat, and Growth) is needed to ensure that future features like the Open World and Story can be built on a stable, testable, and scalable architecture.
 
-## 2. Core Mechanics
+## Solution
+Implement a modular "Attribute Package" system and a class-based growth engine that powers a tactical ATB combat system, character progression, and world interactions. This solution focuses on separation of concerns, where mechanical logic is decoupled from state representation.
 
-### 2.1 Attribute System
-Five fundamental attributes that define all entities:
-- **Vida (HP):** Maximum hit points.
-- **Mana (MP):** Resource for Spells.
-- **Agilidade:** Governs ATB fill speed and Flee chance.
-- **Força:** Base for physical damage and Absolute Defense calculations.
-- **Inteligência:** Threshold for learning skills/spells, base for magical damage, Relative Defense, and status effect efficacy.
+## User Stories
+1. As a player, I want to see my character's core attributes (Health, Mana, Agility, Strength, Intelligence) so I can understand their strengths and weaknesses.
+2. As a player, I want to choose between Warrior, Mage, and Rogue classes to experience different gameplay styles.
+3. As a player, I want my character to grow automatically as they level up, with stats increasing based on my chosen class, so I feel a sense of progression.
+4. As a player, I want to learn new skills and spells automatically when I reach certain Intelligence thresholds, rewarding my investment in that attribute.
+5. As a player, I want to participate in Active Time Battle (ATB) combat where my Agility determines how often I can act, adding a layer of timing and strategy.
+6. As a player, I want to use different combat actions (Attack, Skills, Spells, Items, Flee) to overcome various enemy types.
+7. As a player, I want to experience tactical combat where defense is handled differently for physical (Absolute) vs magical (Relative) damage.
+8. As a player, I want to see enemies on the world map so I can choose which encounters to engage in.
+9. As a player, I want to interact with NPCs and make choices in dialogues that reflect my character's attributes or decisions.
+10. As a player, I want to use my attributes to solve world puzzles, such as pushing heavy rocks if my Strength is high enough.
+11. As a developer, I want a modular "Attribute Package" so I can easily reuse the stat logic for both players and enemies.
+12. As a developer, I want a shared experience system so the entire party progresses together without the need for managing individual XP pools.
+13. As a player, I want status effects (Poison, Paralysis, Sleep, Weakness, Dizziness, Silence, Stupidity) to behave predictably based on the Intelligence gap between the attacker and defender.
+14. As a player, I want my equipment to have different effectiveness based on my class proficiency, encouraging role-specialization.
 
-### 2.2 Classes & Growth
-Three initial classes with distinct roles:
-- **Guerreiro:** High HP and Strength gains.
-- **Mago:** High Mana and Intelligence gains.
-- **Ladino:** High Agility and balanced Intelligence gains.
+## Implementation Decisions
+- **Modular 'Attribute Package'**: Logic for Health, Mana, Agility, Strength, and Intelligence is encapsulated in a composition-based system. It calculates final "Runtime Stats" by applying level gain rates, equipment modifiers, and status effect debuffs.
+- **Class-Based Growth Engine**: A registry of class definitions (Warrior, Mage, Rogue) containing starting values and gain multipliers. Growth is automatic upon leveling.
+- **Skill/Spell Acquisition**: A system that maps Intelligence thresholds to specific Skill or Spell objects. Acquisition is automatic upon reaching thresholds.
+- **ATB Combat Core**: A circular meter-based Active Time Battle system. Agility determines the fill rate. Actions include Attack, Skills, Spells, Items, and Flee.
+- **Dual-Defense Model**: 
+  - **Absolute Defense**: Subtractive reduction (Damage - Defense) for physical attacks.
+  - **Relative Defense**: Percentage-based reduction for magical/skill damage.
+- **Status-Based AI**: Enemies use mixed behaviors (Random, Scripted, Reactive, Strategic) and analyze player attributes (Intelligence-based analysis) to choose actions.
+- **Data Persistence**: Use JSON for save files, storing character state, party progress, and world flags.
 
-**Growth Model:**
-- **Initial Values:** Distinct per class at Level 1.
-- **Gain Rate:** Automatic attribute increase per level based on class multipliers.
-- **Experience:** Shared equally among the active party. No Level Cap.
+## Testing Decisions
+- **Unit Testing for Attribute Logic**: Verify that gain rates and multipliers are applied correctly across different levels and classes.
+- **Integration Testing for Combat Flow**: Simulate ATB turns to verify turn ordering and correct application of both Absolute and Relative defense models.
+- **Validation of Skill Gates**: Confirm that skills and spells are unlocked exactly when Intelligence thresholds are reached.
+- **Behavioral Testing for Enemy AI**: Test that AI routines react correctly to player status and attributes.
 
-### 2.3 Skill & Spell System
-- **Skills:** Class-specific or common abilities. No cost to use. Gated by Intelligence requirements.
-- **Spells:** Consume Mana. Also gated by Intelligence.
-- **Acquisition:** Automatic discovery upon reaching the required Intelligence and Level thresholds.
+## Out of Scope
+- High-fidelity graphics (using primitives/simple sprites initially).
+- Advanced world map features (minimaps, fog of war).
+- Multiplayer or network functionality.
+- Complex crafting or profession systems.
 
-### 2.4 Combat System (ATB)
-- **Flow:** Active Time Battle. Time passes continuously; actions are taken when a circular meter fills.
-- **Actions:** Attack, Skills, Spells, Items, Flee.
-- **Defense Logic:** 
-    - **Absolute Defense:** Subtractive reduction (Damage - Defense) for physical attacks.
-    - **Relative Defense:** Percentage-based reduction for magical/skill damage.
-- **Status Effects:** Poison, Paralysis, Sleep, Weakness, Dizziness, Silence, Stupidity (disables skills/spells).
-    - Efficacy depends on the Intelligence difference between attacker and defender.
-    - Resisted via equipment.
-
-## 3. World & Exploration
-- **Perspective:** 2D Top-down.
-- **World Type:** Open World (aesthetic-only biomes).
-- **Encounter Type:** Visible enemies on the map (no random encounters).
-- **NPCs:** Classic dialogue windows with branching choices.
-- **Items & Economy:** Loot from enemies, shop purchases, and world chests. Accessible costs for recovery.
-
-## 4. Technical Architecture
-- **Language:** Python 3.
-- **Library:** Pygame.
-- **Data Persistence:** JSON files for Save Points and progress.
-- **Data Model:** Independent "Attribute Package" that calculates final values dynamically using Base Stats, Level, and Class Multipliers (Composition over Inheritance).
-
-## 5. Success Criteria
-- Functional ATB loop with visual circular meters.
-- Accurate character scaling across levels based on class gain rates.
-- Working inventory/equipment system with class-based proficiency.
-- Save/Load functionality using Save Points.
+## Further Notes
+The project follows a Socratic methodology for development, meaning technical implementation details (classes, methods) are derived from these requirements through logical deduction and architectural mapping.
