@@ -22,5 +22,5 @@
 5. [x] Character Initialization System
 6. [x] ATB Engine Prototype
 7. [x] Skill & Damage Calculation System
-8. [ ] World & Exploration Module
+8. [x] World & Exploration Module
 9. [ ] NPC & Dialogue System

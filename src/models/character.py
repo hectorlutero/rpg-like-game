@@ -1,4 +1,5 @@
 from src.models.attributes import AttributePackage
+from src.models.world import Position
 
 class Character:
     def __init__(self, name, character_class, base_stats=None, level=1):
@@ -16,6 +17,9 @@ class Character:
         # Current resources
         self.current_hp = self.get_attribute('vida')
         self.current_mana = self.get_attribute('mana')
+        
+        # Position in the world
+        self.position = Position(0, 0)
 
     def get_attribute(self, name):
         base_value = self.base_stats.get(name, 0)
@@ -38,7 +42,5 @@ class Character:
 
     def level_up(self):
         self.level += 1
-        # Update current hp/mana on level up? 
-        # (For now just maxing them out is a simple approach)
         self.current_hp = self.get_attribute('vida')
         self.current_mana = self.get_attribute('mana')
