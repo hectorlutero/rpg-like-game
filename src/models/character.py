@@ -7,8 +7,15 @@ class Character:
         self.base_stats = base_stats if base_stats is not None else character_class.initial_stats
         self.level = level
         self.xp = 0
-        self.xp_to_next_level = 100 # Simple fixed threshold
+        self.xp_to_next_level = 100
         self.attributes = AttributePackage()
+        
+        self.defense_absolute = 0
+        self.defense_relative = 0.0
+        
+        # Current resources
+        self.current_hp = self.get_attribute('vida')
+        self.current_mana = self.get_attribute('mana')
 
     def get_attribute(self, name):
         base_value = self.base_stats.get(name, 0)
@@ -16,6 +23,12 @@ class Character:
         gain_rate = self.character_class.gain_rates.get(name, 0.0)
         
         return self.attributes.calculate(base_value, self.level, gain_rate, multiplier)
+
+    def use_spell(self, spell):
+        if self.current_mana >= spell.mana_cost:
+            self.current_mana -= spell.mana_cost
+            return True
+        return False
 
     def gain_xp(self, amount):
         self.xp += amount
@@ -25,4 +38,7 @@ class Character:
 
     def level_up(self):
         self.level += 1
-        # In the future, we could increase xp_to_next_level here
+        # Update current hp/mana on level up? 
+        # (For now just maxing them out is a simple approach)
+        self.current_hp = self.get_attribute('vida')
+        self.current_mana = self.get_attribute('mana')
