@@ -19,7 +19,7 @@
 2. [x] Detailed Design Refinement (Grill-Me)
 3. [x] Product Requirements Document (PRD)
 4. [x] Core Data Structure Architecture (Implementation)
-5. [ ] Character Initialization System
+5. [x] Character Initialization System
 6. [ ] ATB Engine Prototype
 7. [ ] Skill & Damage Calculation System
 8. [ ] World & Exploration Module
