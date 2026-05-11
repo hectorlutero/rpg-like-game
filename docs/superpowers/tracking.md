@@ -20,7 +20,7 @@
 3. [x] Product Requirements Document (PRD)
 4. [x] Core Data Structure Architecture (Implementation)
 5. [x] Character Initialization System
-6. [ ] ATB Engine Prototype
+6. [x] ATB Engine Prototype
 7. [ ] Skill & Damage Calculation System
 8. [ ] World & Exploration Module
 9. [ ] NPC & Dialogue System
