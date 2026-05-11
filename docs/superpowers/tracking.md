@@ -23,4 +23,5 @@
 6. [x] ATB Engine Prototype
 7. [x] Skill & Damage Calculation System
 8. [x] World & Exploration Module
-9. [ ] NPC & Dialogue System
+9. [x] NPC & Dialogue System
+10. [ ] Interface de Combate e Medidores Circulares
