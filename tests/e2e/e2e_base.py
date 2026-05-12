@@ -29,8 +29,9 @@ class E2EBase:
                 self.player.gold += 100
                 print(f"DEBUG: +100 Gold (Total: {self.player.gold})")
 
-    def run(self, initial_scene):
+    def run(self, initial_scene, auto_exit_after=None, screenshot_path=None):
         self.manager.push(initial_scene)
+        frames = 0
         
         while self.context.running:
             dt = self.clock.tick(60) / 1000.0
@@ -44,7 +45,16 @@ class E2EBase:
             self.manager.update(dt)
             self.screen.fill((30, 30, 30))
             self.manager.draw(self.screen)
+            
+            # Auto-screenshot after some frames
+            if screenshot_path and frames == 5:
+                pygame.image.save(self.screen, screenshot_path)
+                print(f"DEBUG: Screenshot saved to {screenshot_path}")
+            
             pygame.display.flip()
+            frames += 1
+            
+            if auto_exit_after and frames >= auto_exit_after:
+                break
             
         pygame.quit()
-        sys.exit()

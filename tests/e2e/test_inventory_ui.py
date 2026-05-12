@@ -1,28 +1,7 @@
-import os
 import pygame
 import pytest
-from src.models.character import Character
-from src.models.classes import Warrior
-from src.models.world import World
-from src.ui.scenes import GameContext, SceneManager
+from tests.e2e.ui_tester import UITester
 from src.ui.menu_scene import MenuScene
-
-# Configure Pygame to use a dummy video driver for headless testing
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-
-class UITester:
-    def __init__(self):
-        pygame.init()
-        self.screen = pygame.display.set_mode((800, 600))
-        self.world = World([[0]*10 for _ in range(10)])
-        self.player = Character("Tester", Warrior())
-        self.context = GameContext(self.player, self.world)
-        self.manager = SceneManager(self.context)
-
-    def post_key(self, key):
-        event = pygame.event.Event(pygame.KEYDOWN, {'key': key})
-        self.manager.handle_event(event)
-        self.manager.update(0.1)
 
 def test_inventory_ui_flow_automated():
     tester = UITester()

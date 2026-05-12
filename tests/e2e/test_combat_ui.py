@@ -1,37 +1,11 @@
-import os
 import pygame
 import pytest
 from src.models.character import Character
 from src.models.classes import Warrior
-from src.models.world import World, Position
-from src.ui.scenes import GameContext, SceneManager
+from src.models.world import Position
 from src.ui.combat_scene import CombatScene
 from src.models.combat import CombatManager
-
-# Configure Pygame to use a dummy video driver for headless testing
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-
-class UITester:
-    def __init__(self):
-        pygame.init()
-        self.screen = pygame.display.set_mode((800, 600))
-        self.world = World([[0]*10 for _ in range(10)])
-        self.player = Character("Hero", Warrior())
-        self.context = GameContext(self.player, self.world)
-        self.manager = SceneManager(self.context)
-
-    def post_key(self, key):
-        event = pygame.event.Event(pygame.KEYDOWN, {'key': key})
-        self.manager.handle_event(event)
-        self.manager.update(0.1)
-    
-    def wait_for_player_turn(self, timeout_steps=1000):
-        """Advances time until it's the player's turn or timeout."""
-        for _ in range(timeout_steps):
-            if self.manager.active_scene.combat_manager.is_waiting_for_input:
-                return True
-            self.manager.update(0.1)
-        return False
+from tests.e2e.ui_tester import UITester
 
 def test_combat_ui_flow_automated():
     tester = UITester()
