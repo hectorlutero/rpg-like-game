@@ -7,14 +7,14 @@ O herói atualmente não possui forma de aumentar seu poder através de itens ou
 Implementar um sistema completo de Equipamentos (Arma, Escudo, Armadura, Acessório) com bônus híbridos, um Inventário categorizado e um Sistema Monetário (Ouro). Itens serão adquiridos via Baús, Drops de Combate e Lojas.
 
 ## User Stories
-1. Como herói, quero equipar uma arma para aumentar meu dano físico e força.
-2. Como herói, quero equipar uma armadura para reduzir o dano recebido.
-3. Como jogador, quero abrir baús no mapa para encontrar itens raros ou ouro.
-4. Como jogador, quero que inimigos deixem cair espólios após a batalha.
-5. Como herói, quero acumular ouro para comprar equipamentos melhores em uma loja.
-6. Como jogador, quero visualizar meu inventário organizado por categorias (Equipamentos e Consumíveis).
-7. Como herói, quero usar poções do meu inventário durante a exploração ou combate para recuperar HP.
-8. Como desenvolvedor, quero que itens tenham requisitos de classe ou atributos mínimos para serem equipados.
+1. [X] Como herói, quero equipar uma arma para aumentar meu dano físico e força.
+2. [X] Como herói, quero equipar uma armadura para reduzir o dano recebido.
+3. [X] Como jogador, quero abrir baús no mapa para encontrar itens raros ou ouro.
+4. [X] Como jogador, quero que inimigos deixem cair espólios após a batalha.
+5. [X] Como herói, quero acumular ouro para comprar equipamentos melhores em uma loja.
+6. [X] Como jogador, quero visualizar meu inventário organizado por categorias (Equipamentos e Consumíveis).
+7. [X] Como herói, quero usar poções do meu inventário durante a exploração ou combate para recuperar HP.
+8. [ ] Como desenvolvedor, quero que itens tenham requisitos de classe ou atributos mínimos para serem equipados. (Em progresso - Issue #4)
 
 ## Implementation Decisions
 - **Inventory Module**: Criação da classe `Inventory` que gerencia listas de `Item` e `Equipment`.

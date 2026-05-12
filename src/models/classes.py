@@ -3,6 +3,7 @@ class BaseClass:
         self.multipliers = {}
         self.gain_rates = {}
         self.initial_stats = {}
+        self.proficiencies = {} # {'sword': 1.2}
 
 class Warrior(BaseClass):
     def __init__(self):
@@ -15,6 +16,9 @@ class Warrior(BaseClass):
         }
         self.gain_rates = {
             'vida': 10.0, 'mana': 2.0, 'agilidade': 1.0, 'forca': 2.0, 'inteligencia': 0.5
+        }
+        self.proficiencies = {
+            'sword': 1.2, 'shield': 1.2, 'heavy_armor': 1.1
         }
 
 class Mage(BaseClass):
@@ -29,6 +33,9 @@ class Mage(BaseClass):
         self.gain_rates = {
             'vida': 5.0, 'mana': 10.0, 'agilidade': 1.0, 'forca': 0.5, 'inteligencia': 5.0
         }
+        self.proficiencies = {
+            'staff': 1.3, 'robe': 1.1
+        }
 
 class Rogue(BaseClass):
     def __init__(self):
@@ -41,4 +48,7 @@ class Rogue(BaseClass):
         }
         self.gain_rates = {
             'vida': 7.0, 'mana': 4.0, 'agilidade': 4.0, 'forca': 1.5, 'inteligencia': 2.0
+        }
+        self.proficiencies = {
+            'dagger': 1.4, 'leather_armor': 1.2
         }

@@ -6,10 +6,12 @@ class Item:
         self.category = category
 
 class Equipment(Item):
-    def __init__(self, name, description, slot, bonuses=None, req_stats=None, req_class=None, price=0):
+    def __init__(self, name, description, slot, bonuses=None, req_stats=None, req_class=None, price=0, percent_bonuses=None, tags=None):
         super().__init__(name, description, price, category="Equipment")
         self.slot = slot # "weapon", "shield", "armor", "accessory"
         self.bonuses = bonuses or {} # {'forca': 5, 'defesa_absoluta': 2}
+        self.percent_bonuses = percent_bonuses or {} # {'vida': 0.10}
+        self.tags = tags or [] # ["sword", "heavy_armor"]
         self.req_stats = req_stats or {} # {'forca': 10}
         self.req_class = req_class # "Warrior"
 
@@ -30,15 +32,23 @@ CONSUMABLE_DATA = {
 EQUIPMENT_DATA = {
     "Espada de Ferro": Equipment(
         "Espada de Ferro", "Uma espada robusta de ferro.", 
-        slot="weapon", bonuses={'forca': 5}, req_stats={'forca': 8}, price=50
+        slot="weapon", bonuses={'forca': 5}, req_stats={'forca': 8}, price=50, tags=["sword"]
     ),
     "Escudo de Madeira": Equipment(
         "Escudo de Madeira", "Proteção básica contra ataques.", 
-        slot="shield", bonuses={'defesa_absoluta': 3}, req_stats={'forca': 5}, price=30
+        slot="shield", bonuses={'defesa_absoluta': 3}, req_stats={'forca': 5}, price=30, tags=["shield"]
     ),
     "Armadura de Couro": Equipment(
         "Armadura de Couro", "Leve e resistente.", 
-        slot="armor", bonuses={'vida': 20, 'defesa_absoluta': 1}, price=40
+        slot="armor", bonuses={'vida': 20, 'defesa_absoluta': 1}, price=40, tags=["leather_armor"]
+    ),
+    "Armadura de Placas": Equipment(
+        "Armadura de Placas", "Pesada e impenetrável.",
+        slot="armor", bonuses={'vida': 50, 'defesa_absoluta': 5}, price=150, tags=["heavy_armor"], req_stats={'forca': 15}
+    ),
+    "Cajado de Aprendiz": Equipment(
+        "Cajado de Aprendiz", "Foca energia mágica.",
+        slot="weapon", bonuses={'inteligencia': 8}, price=60, tags=["staff"]
     ),
     "Anel de Inteligência": Equipment(
         "Anel de Inteligência", "Aumenta a compreensão mágica.", 
