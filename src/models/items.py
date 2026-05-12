@@ -30,5 +30,17 @@ EQUIPMENT_DATA = {
     "Anel de Inteligência": Equipment(
         "Anel de Inteligência", "Aumenta a compreensão mágica.", 
         slot="accessory", bonuses={'inteligencia': 5}, price=100
+    ),
+    "Anel Anti-Veneno": Equipment(
+        "Anel Anti-Veneno", "Protege 100% contra veneno.",
+        slot="accessory", bonuses={}, price=150
+    ),
+    "Anel de Resistência": Equipment(
+        "Anel de Resistência", "Aumenta 50% de resistência a tudo.",
+        slot="accessory", bonuses={}, price=200
     )
 }
+
+# Update items with resistances
+EQUIPMENT_DATA["Anel Anti-Veneno"].resistances = {'poison': 1.0}
+EQUIPMENT_DATA["Anel de Resistência"].resistances = {'poison': 0.5, 'paralysis': 0.5}

@@ -73,14 +73,5 @@ class ShopScene(Scene):
 
         # Feedback
         pygame.draw.rect(screen, (0, 0, 0), (120, 450, 560, 60))
-        self._draw_text(screen, self.message, 400, 480, size=18, color=(200, 200, 200))
-        self._draw_text(screen, "ESPAÇO: Comprar | ESC: Sair", 400, 530, size=16, color=(150, 150, 150))
-
-    def _draw_text(self, screen, text, x, y, size=24, color=(255, 255, 255), align="center"):
-        font = pygame.font.SysFont("Arial", size)
-        surf = font.render(text, True, color)
-        rect = surf.get_rect()
-        if align == "center": rect.center = (x, y)
-        elif align == "left": rect.midleft = (x, y)
-        elif align == "right": rect.midright = (x, y)
-        screen.blit(surf, rect)
+        self._draw_text(screen, self.message, 400, 480, size=18, color=(200, 200, 200), align="center")
+        self._draw_text(screen, "ESPAÇO: Comprar | ESC: Sair", 400, 530, size=16, color=(150, 150, 150), align="center")

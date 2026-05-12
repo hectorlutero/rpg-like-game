@@ -1,0 +1,26 @@
+{
+    "name": "Her\u00f3i",
+    "class": "Warrior",
+    "level": 1,
+    "hp": 60,
+    "mana": 17,
+    "xp": 0,
+    "energy": 3,
+    "gold": 150,
+    "skills": [],
+    "inventory": [],
+    "equipment": {
+        "weapon": "Espada de Ferro",
+        "shield": "Escudo de Madeira",
+        "armor": null,
+        "accessory": "Anel de Resist\u00eancia"
+    },
+    "opened_chests": [
+        "status_test_chest",
+        "spawn_chest_1"
+    ],
+    "position": {
+        "x": 500,
+        "y": 188
+    }
+}

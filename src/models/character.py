@@ -31,6 +31,7 @@ class Character:
         self.skills = set() # Set of skill names
         self._gold = 0
         self.inventory = Inventory()
+        self.status_effects = {} # {status_type: {'duration': X, 'potency': Y}}
 
     @property
     def gold(self):

@@ -18,6 +18,10 @@ class ExplorationScene(Scene):
         self.player_speed = 4
 
     def handle_event(self, event):
+        # Only process events if this is the active scene
+        if self.manager.active_scene != self:
+            return
+
         if event.type == pygame.KEYDOWN:
             if self.active_dialogue:
                 choices = self.active_dialogue.get_current_choices()
@@ -86,6 +90,10 @@ class ExplorationScene(Scene):
                     self.manager.push(MenuScene(self.manager))
 
     def update(self, dt):
+        # Only process movement if this is the active scene
+        if self.manager.active_scene != self:
+            return
+
         if not self.active_dialogue:
             keys = pygame.key.get_pressed()
             dx, dy = 0, 0
@@ -106,27 +114,39 @@ class ExplorationScene(Scene):
                 if tile == 1: pygame.draw.rect(screen, (100, 100, 100), (x*32, y*32, 32, 32))
                 else: pygame.draw.rect(screen, (50, 50, 50), (x*32, y*32, 32, 32), 1)
         
-        # Draw Entities
-        pygame.draw.rect(screen, (50, 200, 50), (self.npc.position.x - 16, self.npc.position.y - 16, 32, 32))
-        pygame.draw.rect(screen, (200, 50, 50), (self.enemy_pos.x - 16, self.enemy_pos.y - 16, 32, 32))
-        
         # Draw all interactables in the world (simple visualization)
         for (tx, ty), obj in self.context.world.interactables.items():
             from src.models.interaction import MagicBook, TrainingObject, Chest
-            if isinstance(obj, MagicBook):
-                pygame.draw.rect(screen, (150, 50, 255), (tx * 32 + 8, ty * 32 + 8, 16, 16))
+            from src.models.combat import EnemyInteractable
+            from src.ui.shop_scene import Shopkeeper
+            
+            x_pos, y_pos = tx * 32, ty * 32
+
+            if isinstance(obj, EnemyInteractable):
+                # Inimigos são quadrados vermelhos
+                pygame.draw.rect(screen, (200, 50, 50), (x_pos, y_pos, 32, 32))
+                # Detalhe para diferenciar (olhos pequenos)
+                pygame.draw.rect(screen, (255, 255, 255), (x_pos + 6, y_pos + 10, 4, 4))
+                pygame.draw.rect(screen, (255, 255, 255), (x_pos + 22, y_pos + 10, 4, 4))
+            
+            elif isinstance(obj, MagicBook):
+                pygame.draw.rect(screen, (150, 50, 255), (x_pos + 8, y_pos + 8, 16, 16))
             elif isinstance(obj, TrainingObject):
-                pygame.draw.rect(screen, (150, 100, 50), (tx * 32 + 4, ty * 32 + 4, 24, 24))
+                pygame.draw.rect(screen, (150, 100, 50), (x_pos + 4, y_pos + 4, 24, 24))
             elif isinstance(obj, Chest):
                 color = (255, 200, 0) if not obj.is_open else (80, 40, 0)
-                pygame.draw.rect(screen, color, (tx * 32 + 6, ty * 32 + 6, 20, 20))
+                pygame.draw.rect(screen, color, (x_pos + 6, y_pos + 6, 20, 20))
                 if not obj.is_open:
-                    pygame.draw.rect(screen, (0, 0, 0), (tx * 32 + 6, ty * 32 + 14, 20, 2), 1)
-            from src.ui.shop_scene import Shopkeeper
-            if isinstance(obj, Shopkeeper):
-                pygame.draw.rect(screen, (180, 180, 50), (tx * 32 + 4, ty * 32 + 4, 24, 24))
-                pygame.draw.rect(screen, (255, 255, 255), (tx * 32 + 10, ty * 32 + 8, 4, 4)) # Olhos
-                pygame.draw.rect(screen, (255, 255, 255), (tx * 32 + 18, ty * 32 + 8, 4, 4))
+                    pygame.draw.rect(screen, (0, 0, 0), (x_pos + 6, y_pos + 14, 20, 2), 1)
+            elif isinstance(obj, Shopkeeper):
+                pygame.draw.rect(screen, (180, 180, 50), (x_pos + 4, y_pos + 4, 24, 24))
+                pygame.draw.rect(screen, (255, 255, 255), (x_pos + 10, y_pos + 8, 4, 4)) # Olhos
+                pygame.draw.rect(screen, (255, 255, 255), (x_pos + 18, y_pos + 8, 4, 4))
+            
+            from src.models.dialogue import NPC
+            if isinstance(obj, NPC):
+                # NPCs são quadrados verdes
+                pygame.draw.rect(screen, (50, 200, 50), (x_pos, y_pos, 32, 32))
 
         # Player (Blue Square)
         px, py = self.context.player.position.x, self.context.player.position.y
@@ -166,12 +186,4 @@ class ExplorationScene(Scene):
                     self._draw_text(screen, f"> {choice_text}", 100, y_pos, size=18, color=color, align="left")
 
         # UI Overlay (Energy)
-        self._draw_text(screen, f"Energia: {self.context.player.energy}/3", 20, 20, size=20, color=(255, 255, 0))
-
-    def _draw_text(self, screen, text, x, y, size=24, color=(255, 255, 255), align="left"):
-        font = pygame.font.SysFont("Arial", size)
-        surf = font.render(text, True, color)
-        rect = surf.get_rect()
-        if align == "center": rect.center = (x, y)
-        else: rect.topleft = (x, y)
-        screen.blit(surf, rect)
+        self._draw_text(screen, f"Energia: {self.context.player.energy}/3", 20, 20, size=20, color=(255, 255, 0), align="left")

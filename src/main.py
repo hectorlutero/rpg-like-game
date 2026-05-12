@@ -77,6 +77,36 @@ def main():
     enemy_trigger = EnemyInteractable("Slime", Warrior(), 1, enemy_pos, gold_yield=30, xp_yield=150)
     world.add_interactable(200 // 32, 400 // 32, enemy_trigger)
 
+    # TESTE STATUS: Verme Tóxico (Veneno)
+    tox_pos = Position(300, 400)
+    toxic_worm = EnemyInteractable("Verme Tóxico", Warrior(), 2, tox_pos, gold_yield=50, xp_yield=200)
+    # Adicionamos a habilidade de veneno ao inimigo manualmente para o teste
+    # No futuro isso pode vir de um registro de inimigos
+    def setup_toxic_worm(context):
+        from src.ui.combat_scene import CombatScene
+        from src.models.character import Character
+        from src.models.combat import CombatManager
+        enemy = Character("Verme Tóxico", Warrior(), level=2)
+        enemy.skills.add("Picada Venenosa")
+        cm = CombatManager(context.party, [enemy], gold_reward=50, xp_reward=200)
+        return CombatScene(context.scene_manager, cm, tox_pos)
+    toxic_worm.on_interact = setup_toxic_worm
+    world.add_interactable(300 // 32, 400 // 32, toxic_worm)
+
+    # TESTE STATUS: Eletroslime (Paralisia)
+    elec_pos = Position(400, 400)
+    elec_slime = EnemyInteractable("Eletroslime", Warrior(), 2, elec_pos, gold_yield=50, xp_yield=200)
+    def setup_elec_slime(context):
+        from src.ui.combat_scene import CombatScene
+        from src.models.character import Character
+        from src.models.combat import CombatManager
+        enemy = Character("Eletroslime", Warrior(), level=2)
+        enemy.skills.add("Faísca Paralisante")
+        cm = CombatManager(context.party, [enemy], gold_reward=50, xp_reward=200)
+        return CombatScene(context.scene_manager, cm, elec_pos)
+    elec_slime.on_interact = setup_elec_slime
+    world.add_interactable(400 // 32, 400 // 32, elec_slime)
+
     # NOVO: Mercador
     from src.ui.shop_scene import Shopkeeper
     merchant = Shopkeeper("Mercador Errante", ["Espada de Ferro", "Armadura de Couro", "Anel de Inteligência"])
@@ -93,6 +123,9 @@ def main():
     fast_cut_book = MagicBook("Corte Rápido", int_threshold=5, min_level=1)
     world.add_interactable(100 // 32, 200 // 32, fast_cut_book)
 
+    poison_book = MagicBook("Picada Venenosa", int_threshold=0, min_level=1)
+    world.add_interactable(50 // 32, 200 // 32, poison_book)
+
     dummy = TrainingObject("Boneco de Treino", "forca")
     world.add_interactable(300 // 32, 100 // 32, dummy)
 
@@ -101,6 +134,12 @@ def main():
     if "spawn_chest_1" in context.opened_chests:
         chest.is_open = True
     world.add_interactable(500 // 32, 100 // 32, chest)
+
+    # Baú de Teste de Status
+    status_chest = Chest(item=EQUIPMENT_DATA["Anel de Resistência"], gold=0, chest_id="status_test_chest")
+    if "status_test_chest" in context.opened_chests:
+        status_chest.is_open = True
+    world.add_interactable(550 // 32, 100 // 32, status_chest)
     
     # Inicia com a cena de exploração
     manager.push(ExplorationScene(manager, npc, enemy_pos))

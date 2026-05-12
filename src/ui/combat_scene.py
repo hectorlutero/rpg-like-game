@@ -13,7 +13,7 @@ class CombatScene(Scene):
         self.ui = CombatUI(self.manager.context.screen if hasattr(self.manager.context, 'screen') else None)
         
         # Gerenciador de Navegação do Combate
-        self.main_options = ["Attack", "Skill", "Magic", "Item", "Flee"]
+        self.main_options = ["Attack", "Skill", "Magic", "Item", "Wait", "Flee"]
         self.selector = SelectionManager(self.main_options)
         
         # Estados: MAIN, SKILL_SELECT, MAGIC_SELECT
@@ -41,10 +41,19 @@ class CombatScene(Scene):
         selection = self.selector.current_item
         attacker = self.combat_manager.active_entity
         from src.models.skills import ABILITY_DATA
+        from src.models.status import StatusManager
+
+        # Check for Paralysis restriction
+        is_paralyzed = StatusManager.is_paralyzed(attacker)
+        if is_paralyzed and selection not in ["Item", "Wait"]:
+            self.combat_manager.battle_log.append(f"{attacker.name} está paralisado e só pode usar Itens ou Esperar!")
+            return
 
         if self.state == "MAIN":
             if selection == "Attack":
                 self._execute_combat_action("Attack")
+            elif selection == "Wait":
+                self._execute_combat_action("Wait")
             elif selection == "Skill":
                 # Entra no submenu de Skills Físicas
                 skills = [name for name, abi in ABILITY_DATA.items() 
@@ -88,8 +97,28 @@ class CombatScene(Scene):
         
         if result.get("fled"):
             self.manager.pop()
-            self.context.player.position.x -= 40
-            self.context.player.position.y -= 40
+            
+            # Recuar o jogador baseado na direção que ele estava olhando
+            # Tentamos recuar 40 pixels, se falhar tentamos menos, até 0.
+            dx, dy = 0, 0
+            if self.context.player.facing_direction == "N": dy = 40
+            elif self.context.player.facing_direction == "S": dy = -40
+            elif self.context.player.facing_direction == "W": dx = 40
+            elif self.context.player.facing_direction == "E": dx = -40
+            
+            # Verifica colisão para o recuo
+            new_x = self.context.player.position.x + dx
+            new_y = self.context.player.position.y + dy
+            if self.context.world.can_move_to(self.context.player, new_x, new_y):
+                self.context.player.position.x = new_x
+                self.context.player.position.y = new_y
+            else:
+                # Se não puder recuar 40px, tenta 20px, senão fica parado
+                new_x = self.context.player.position.x + (dx // 2)
+                new_y = self.context.player.position.y + (dy // 2)
+                if self.context.world.can_move_to(self.context.player, new_x, new_y):
+                    self.context.player.position.x = new_x
+                    self.context.player.position.y = new_y
         
         # Check for victory
         if all(e.hp <= 0 for e in self.combat_manager.enemies):
@@ -108,13 +137,29 @@ class CombatScene(Scene):
             tx = int(self.enemy_world_pos.x // self.context.world.tile_size)
             ty = int(self.enemy_world_pos.y // self.context.world.tile_size)
             self.context.world.remove_interactable(tx, ty)
-            self.enemy_world_pos.x, self.enemy_world_pos.y = -100, -100
+            # Removemos o trigger do mundo, mas não precisamos necessariamente 
+            # alterar as coordenadas do objeto enemy_world_pos se ele for compartilhado
+            # self.enemy_world_pos.x, self.enemy_world_pos.y = -100, -100
 
     def update(self, dt):
         ready_entity = self.combat_manager.update(dt)
         if ready_entity and ready_entity in self.combat_manager.enemies:
-            # Enemy AI
-            self.combat_manager.execute_action(ready_entity, "Attack", self.context.player)
+            from src.models.status import StatusManager
+            if StatusManager.is_paralyzed(ready_entity):
+                self.combat_manager.battle_log.append(f"{ready_entity.name} está paralisado e não pode agir!")
+                self.combat_manager.atb_states[ready_entity] = 0.0
+                self.combat_manager.active_entity = None
+                return
+
+            # Enemy AI: Uses a random skill if it has any, otherwise attacks
+            import random
+            available_skills = list(ready_entity.skills)
+            if available_skills and random.random() < 0.7: # 70% chance to use a skill
+                skill_name = random.choice(available_skills)
+                self.combat_manager.execute_action(ready_entity, "Skill", self.context.party[0], ability_name=skill_name)
+            else:
+                self.combat_manager.execute_action(ready_entity, "Attack", self.context.party[0])
+
             if self.context.player.hp <= 0:
                 print("Game Over!")
                 # Reset simple logic

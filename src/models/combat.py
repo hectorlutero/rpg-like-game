@@ -1,6 +1,7 @@
 import math
-
+import random
 from src.models.interaction import Interactable
+from src.models.status import StatusManager
 
 class EnemyInteractable(Interactable):
     def __init__(self, name, character_class, level, world_pos, gold_yield=50, xp_yield=100):
@@ -86,6 +87,11 @@ class CombatManager:
             
             if self.atb_states[entity] >= 100.0:
                 self.active_entity = entity
+                
+                # Process Status Ticks at turn start
+                status_logs = StatusManager.process_tick(entity)
+                self.battle_log.extend(status_logs)
+                
                 if entity in self.party:
                     self.is_waiting_for_input = True
                 return entity
@@ -104,7 +110,6 @@ class CombatManager:
         
         elif action_type == "Flee":
             # 50% chance to flee
-            import random
             if random.random() > 0.5:
                 self.battle_log.append(f"{attacker.name} fugiu da batalha!")
                 action_result["fled"] = True
@@ -139,9 +144,23 @@ class CombatManager:
                         self.battle_log.append(f"{attacker.name} usou {ability_name} em {target.name} por {damage} de dano!")
                     
                     target.hp -= damage
+
+                    # Apply Status Effect if present
+                    if ability.status_effect:
+                        success, status_msg = StatusManager.apply_status(
+                            attacker, target, 
+                            ability.status_effect, 
+                            ability.status_chance, 
+                            ability.status_duration, 
+                            ability.status_potency
+                        )
+                        self.battle_log.append(status_msg)
         
         elif action_type == "Item":
             self.battle_log.append(f"{attacker.name} usou um Item (Ainda não implementado)!")
+        
+        elif action_type == "Wait":
+            self.battle_log.append(f"{attacker.name} esperou!")
         
         # Reset ATB
         self.atb_states[attacker] = 0.0

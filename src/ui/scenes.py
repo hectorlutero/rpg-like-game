@@ -19,6 +19,17 @@ class Scene:
     def draw(self, screen):
         pass
 
+    def _draw_text(self, screen, text, x, y, size=24, color=(255, 255, 255), align="center"):
+        import pygame
+        font = pygame.font.SysFont("Arial", size)
+        surf = font.render(text, True, color)
+        rect = surf.get_rect()
+        if align == "center": rect.center = (x, y)
+        elif align == "left": rect.midleft = (x, y)
+        elif align == "right": rect.midright = (x, y)
+        else: rect.topleft = (x, y)
+        screen.blit(surf, rect)
+
 class SceneManager:
     """Gerencia a pilha (stack) de cenas."""
     def __init__(self, context):

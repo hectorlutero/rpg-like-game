@@ -89,7 +89,7 @@ class MenuScene(Scene):
 
         # Instruções
         instr = "SETAS: Navegar | ESPAÇO: Selecionar | ESC: Sair"
-        self._draw_text(screen, instr, 400, 545, size=16, color=(150, 150, 150))
+        self._draw_text(screen, instr, 400, 545, size=16, color=(150, 150, 150), align="center")
 
     def _draw_status_tab(self, screen):
         col1_x, col2_x, col3_x = 70, 310, 540
@@ -145,11 +145,3 @@ class MenuScene(Scene):
 
             self._draw_text(screen, f"{prefix}{item_name}", 100, y_item, size=20, color=color, align="left")
             y_item += 35
-
-    def _draw_text(self, screen, text, x, y, size=24, color=(255, 255, 255), align="center"):
-        font = pygame.font.SysFont("Arial", size)
-        surf = font.render(text, True, color)
-        rect = surf.get_rect()
-        if align == "center": rect.center = (x, y)
-        else: rect.topleft = (x, y)
-        screen.blit(surf, rect)
