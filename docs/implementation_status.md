@@ -23,6 +23,16 @@
 - **Modo Headless**: Testes rodam sem necessidade de interface gráfica física (driver `dummy`), garantindo rapidez e confiabilidade.
 - **Cobertura**: Fluxos de Combate, Inventário e Loja 100% automatizados.
 
-## Próximos Passos
-- **Issue #4**: Implementação de Proficiência de Classe (bônus/restrições específicas).
-- **Expansão de Itens**: Criação de novos equipamentos com bônus percentuais e resistências elementais.
+## Sistemas de Equipamento e Proficiência (Issue #4)
+- **Proficiência**: Implementada lógica de bônus baseados em `tags` de equipamento. Cada classe tem multiplicadores específicos para tipos de arma/armadura.
+- **Bônus Dinâmicos**: Suporte para bônus fixos (Flat) e percentuais (%) em equipamentos, calculados em tempo real.
+- **Requisitos**: Equipamentos agora verificam nível, classe e atributos mínimos antes de permitir o uso.
+
+## Melhorias de Arquitetura (Issues #26, #27, #28, #29)
+- **Combat Logic Centralization (#26)**: Toda a lógica de batalha, IA inimiga e recompensas foi movida para o `CombatManager`, tornando a `CombatScene` uma camada de visualização fina e testável.
+- **Polymorphic Rendering (#27)**: A renderização de objetos no mapa (Interactables) foi movida para as próprias classes (`Chest`, `NPC`, `Shopkeeper`), limpando o loop de desenho da `ExplorationScene`.
+- **Character Refactor (#28)**: Extração da lógica de cálculo de atributos para o `StatsCalculator`, reduzindo o acoplamento da classe `Character`.
+- **Simplificação do ATB (#29)**: Remoção do `ATBEngine` redundante, consolidando o controle de tempo diretamente no `CombatManager`.
+
+## Ferramentas de Teste
+- **Watch Mode**: Adicionada a flag `--watch` à suíte `pytest`. Agora é possível assistir à automação dos robôs E2E rodando visualmente em tempo real.
