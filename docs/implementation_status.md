@@ -31,7 +31,7 @@
 ## Melhorias de Arquitetura (Issues #26, #27, #28, #29)
 - **Combat Logic Centralization (#26)**: Toda a lógica de batalha, IA inimiga e recompensas foi movida para o `CombatManager`, tornando a `CombatScene` uma camada de visualização fina e testável.
 - **Polymorphic Rendering (#27)**: A renderização de objetos no mapa (Interactables) foi movida para as próprias classes (`Chest`, `NPC`, `Shopkeeper`), limpando o loop de desenho da `ExplorationScene`.
-- **Character Refactor (#28)**: Extração da lógica de cálculo de atributos para o `StatsCalculator`, reduzindo o acoplamento da classe `Character`.
+- **Character Refactor (#28)**: Consolidação da lógica de cálculo de atributos (base, ganhos por nível, bônus fixos/percentuais e proficiências) diretamente na classe `Character`, eliminando o módulo externo `attributes.py` e simplificando a arquitetura interna.
 - **Simplificação do ATB (#29)**: Remoção do `ATBEngine` redundante, consolidando o controle de tempo diretamente no `CombatManager`.
 
 ## Ferramentas de Teste
