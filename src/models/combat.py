@@ -1,3 +1,4 @@
+import pygame
 import math
 import random
 from src.models.interaction import Interactable
@@ -21,6 +22,13 @@ class EnemyInteractable(Interactable):
         enemy.weakness = "Ice" 
         cm = CombatManager(context.party, [enemy], gold_reward=self.gold_yield, xp_reward=self.xp_yield, loot_table=self.loot_table)
         return CombatScene(context.scene_manager, cm, self.world_pos)
+
+    def draw(self, screen, context, pos):
+        # Inimigos são quadrados vermelhos
+        pygame.draw.rect(screen, (200, 50, 50), (pos[0], pos[1], 32, 32))
+        # Detalhe para diferenciar (olhos pequenos)
+        pygame.draw.rect(screen, (255, 255, 255), (pos[0] + 6, pos[1] + 10, 4, 4))
+        pygame.draw.rect(screen, (255, 255, 255), (pos[0] + 22, pos[1] + 10, 4, 4))
 
 class DamageCalculator:
     ELEMENT_WEAKNESS = {

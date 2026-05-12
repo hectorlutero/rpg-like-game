@@ -1,3 +1,5 @@
+import pygame
+
 class Interactable:
     """Interface base para qualquer objeto que possa ser ativado pelo Herói."""
     def on_interact(self, context):
@@ -6,6 +8,16 @@ class Interactable:
         :param context: GameContext do jogo para acesso a herói, cenas, etc.
         """
         raise NotImplementedError("Subclasses de Interactable devem implementar on_interact")
+
+    def draw(self, screen, context, pos):
+        """
+        Desenha o objeto no mapa.
+        :param screen: Superfície do Pygame.
+        :param context: GameContext (pode ser necessário para estado).
+        :param pos: Tupla (x, y) em pixels.
+        """
+        # Default fallback: um quadrado cinza
+        pygame.draw.rect(screen, (150, 150, 150), (pos[0], pos[1], 32, 32))
 
 class MagicBook(Interactable):
     def __init__(self, skill_name, int_threshold, min_level=1):
@@ -46,6 +58,9 @@ class MagicBook(Interactable):
         
         return f"Sua inteligência aumentou ao estudar {self.skill_name}."
 
+    def draw(self, screen, context, pos):
+        pygame.draw.rect(screen, (150, 50, 255), (pos[0] + 8, pos[1] + 8, 16, 16))
+
 class TrainingObject(Interactable):
     def __init__(self, name, attribute_key):
         self.name = name
@@ -65,6 +80,9 @@ class TrainingObject(Interactable):
         elif self.attribute_key == "inteligencia": attr_display = "Inteligência"
         
         return f"Seu treino de {self.name} foi produtivo! Sua {attr_display} aumentou."
+
+    def draw(self, screen, context, pos):
+        pygame.draw.rect(screen, (150, 100, 50), (pos[0] + 4, pos[1] + 4, 24, 24))
 
 class Chest(Interactable):
     def __init__(self, items=None, gold=0, chest_id=None, custom_msg=None):
@@ -110,6 +128,14 @@ class Chest(Interactable):
             msg += f"\nEncontrou {item_name}!"
             
         return msg
+
+    def draw(self, screen, context, pos):
+        is_open = self.check_open(context)
+        color = (255, 200, 0) if not is_open else (80, 40, 0)
+        pygame.draw.rect(screen, color, (pos[0] + 6, pos[1] + 6, 20, 20))
+        if not is_open:
+            pygame.draw.rect(screen, (0, 0, 0), (pos[0] + 6, pos[1] + 14, 20, 2), 1)
+
 
 class SelectionManager:
     """Gerenciador universal de navegação em listas (menus, combate, etc)."""

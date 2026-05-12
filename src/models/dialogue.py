@@ -1,3 +1,4 @@
+import pygame
 import math
 from src.models.interaction import Interactable
 
@@ -15,6 +16,12 @@ class NPC(Interactable):
         dx = self.position.x - other_position.x
         dy = self.position.y - other_position.y
         return math.sqrt(dx*dx + dy*dy) <= distance
+
+    def draw(self, screen, context, pos):
+        # NPCs são quadrados verdes
+        pygame.draw.rect(screen, (50, 200, 50), (pos[0] + 4, pos[1] + 4, 24, 24))
+        # Chapéu ou detalhe
+        pygame.draw.rect(screen, (255, 255, 255), (pos[0] + 10, pos[1] + 2, 12, 4))
 
 class DialogueManager:
     def __init__(self, data, start_index=0):

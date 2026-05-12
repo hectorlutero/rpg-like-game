@@ -10,6 +10,11 @@ class Shopkeeper(Interactable):
     def on_interact(self, context):
         return ShopScene(context.scene_manager, self.name, self.inventory_items)
 
+    def draw(self, screen, context, pos):
+        pygame.draw.rect(screen, (180, 180, 50), (pos[0] + 4, pos[1] + 4, 24, 24))
+        pygame.draw.rect(screen, (255, 255, 255), (pos[0] + 10, pos[1] + 8, 4, 4)) # Olhos
+        pygame.draw.rect(screen, (255, 255, 255), (pos[0] + 18, pos[1] + 8, 4, 4))
+
 class ShopScene(Scene):
     def __init__(self, manager, shop_name, items):
         self.manager = manager
