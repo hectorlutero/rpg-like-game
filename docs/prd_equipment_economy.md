@@ -14,7 +14,7 @@ Implementar um sistema completo de Equipamentos (Arma, Escudo, Armadura, Acessó
 5. [X] Como herói, quero acumular ouro para comprar equipamentos melhores em uma loja.
 6. [X] Como jogador, quero visualizar meu inventário organizado por categorias (Equipamentos e Consumíveis).
 7. [X] Como herói, quero usar poções do meu inventário durante a exploração ou combate para recuperar HP.
-8. [ ] Como desenvolvedor, quero que itens tenham requisitos de classe ou atributos mínimos para serem equipados. (Em progresso - Issue #4)
+8. [X] Como desenvolvedor, quero que itens tenham requisitos de classe ou atributos mínimos para serem equipados, com bônus de proficiência.
 
 ## Implementation Decisions
 - **Inventory Module**: Criação da classe `Inventory` que gerencia listas de `Item` e `Equipment`.

@@ -73,6 +73,8 @@ class CombatManager:
         self.active_entity = None
         self.is_waiting_for_input = False
         self.battle_log = []
+        self.is_over = False
+        self.winner = None # "Party" or "Enemies"
 
     def generate_loot(self):
         """Generates a list of items based on the loot table."""
@@ -84,7 +86,7 @@ class CombatManager:
 
     def update(self, dt):
         """Update ATB meters. Returns the entity that reached 100 first, if any."""
-        if self.active_entity or self.is_waiting_for_input:
+        if self.is_over or self.active_entity or self.is_waiting_for_input:
             return None
 
         # Sort by agility to handle simultaneous fills (though dt should be small)
@@ -104,11 +106,76 @@ class CombatManager:
                 
                 if entity in self.party:
                     self.is_waiting_for_input = True
+                
+                # Check if status tick killed the entity
+                self.check_battle_status()
+                if self.is_over:
+                    return None
+                    
                 return entity
         return None
 
+    def handle_enemy_turn(self, enemy):
+        """Processes AI for the given enemy."""
+        if self.is_over or enemy not in self.enemies:
+            return
+
+        if StatusManager.is_paralyzed(enemy):
+            self.battle_log.append(f"{enemy.name} está paralisado e não pode agir!")
+            self.atb_states[enemy] = 0.0
+            self.active_entity = None
+            return
+
+        # Enemy AI: Uses a random skill if it has any, otherwise attacks
+        available_skills = list(enemy.skills)
+        if available_skills and random.random() < 0.7: # 70% chance to use a skill
+            skill_name = random.choice(available_skills)
+            # Targets the first party member for simplicity
+            self.execute_action(enemy, "Skill", self.party[0], ability_name=skill_name)
+        else:
+            self.execute_action(enemy, "Attack", self.party[0])
+
+    def check_battle_status(self):
+        """Checks if the battle is over and sets winner."""
+        if all(e.hp <= 0 for e in self.enemies):
+            self.is_over = True
+            self.winner = "Party"
+        elif all(p.hp <= 0 for p in self.party):
+            self.is_over = True
+            self.winner = "Enemies"
+        return self.is_over
+
+    def resolve_rewards(self):
+        """Distributes rewards and returns a summary message."""
+        if not self.is_over or self.winner != "Party":
+            return []
+
+        messages = []
+        summary = f"VITÓRIA! Ganhou {self.xp_reward} XP"
+        if self.gold_reward > 0:
+            summary += f" e {self.gold_reward} G"
+        messages.append(summary)
+        
+        # Items
+        loot = self.generate_loot()
+        if loot:
+            messages.append("Itens obtidos: " + ", ".join(loot))
+            for item_name in loot:
+                # Note: This assumes party[0] is the main player for inventory
+                self.party[0].inventory.add_item(item_name)
+        
+        # XP and Gold
+        for hero in self.party:
+            hero.gain_xp(self.xp_reward)
+            hero.gold += self.gold_reward
+            
+        return messages
+
     def execute_action(self, attacker, action_type, target, ability_name=None):
         """Executes an action and resets ATB."""
+        if self.is_over:
+            return {"success": False, "msg": "Batalha já terminou."}
+
         calc = DamageCalculator()
         damage = 0
         action_result = {"type": action_type, "success": True}
@@ -123,6 +190,7 @@ class CombatManager:
             if random.random() > 0.5:
                 self.battle_log.append(f"{attacker.name} fugiu da batalha!")
                 action_result["fled"] = True
+                self.is_over = True
             else:
                 self.battle_log.append(f"{attacker.name} tentou fugir, mas falhou!")
                 action_result["success"] = False
@@ -176,6 +244,9 @@ class CombatManager:
         self.atb_states[attacker] = 0.0
         self.active_entity = None
         self.is_waiting_for_input = False
+        
+        # Check if action ended the battle
+        self.check_battle_status()
         
         return action_result
 

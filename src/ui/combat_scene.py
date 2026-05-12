@@ -96,84 +96,68 @@ class CombatScene(Scene):
         )
         
         if result.get("fled"):
-            self.manager.pop()
-            
-            # Recuar o jogador baseado na direção que ele estava olhando
-            # Tentamos recuar 40 pixels, se falhar tentamos menos, até 0.
-            dx, dy = 0, 0
-            if self.context.player.facing_direction == "N": dy = 40
-            elif self.context.player.facing_direction == "S": dy = -40
-            elif self.context.player.facing_direction == "W": dx = 40
-            elif self.context.player.facing_direction == "E": dx = -40
-            
-            # Verifica colisão para o recuo
-            new_x = self.context.player.position.x + dx
-            new_y = self.context.player.position.y + dy
+            self._handle_flee()
+        
+        # Check if battle is over
+        if self.combat_manager.is_over:
+            self._handle_battle_end()
+
+    def _handle_flee(self):
+        self.manager.pop()
+        
+        # Recuar o jogador baseado na direção que ele estava olhando
+        dx, dy = 0, 0
+        if self.context.player.facing_direction == "N": dy = 40
+        elif self.context.player.facing_direction == "S": dy = -40
+        elif self.context.player.facing_direction == "W": dx = 40
+        elif self.context.player.facing_direction == "E": dx = -40
+        
+        # Verifica colisão para o recuo
+        new_x = self.context.player.position.x + dx
+        new_y = self.context.player.position.y + dy
+        if self.context.world.can_move_to(self.context.player, new_x, new_y):
+            self.context.player.position.x = new_x
+            self.context.player.position.y = new_y
+        else:
+            new_x = self.context.player.position.x + (dx // 2)
+            new_y = self.context.player.position.y + (dy // 2)
             if self.context.world.can_move_to(self.context.player, new_x, new_y):
                 self.context.player.position.x = new_x
                 self.context.player.position.y = new_y
-            else:
-                # Se não puder recuar 40px, tenta 20px, senão fica parado
-                new_x = self.context.player.position.x + (dx // 2)
-                new_y = self.context.player.position.y + (dy // 2)
-                if self.context.world.can_move_to(self.context.player, new_x, new_y):
-                    self.context.player.position.x = new_x
-                    self.context.player.position.y = new_y
-        
-        # Check for victory
-        if all(e.hp <= 0 for e in self.combat_manager.enemies):
-            # Adiciona recompensas
-            msg = f"VITÓRIA! Ganhou {self.combat_manager.xp_reward} XP"
-            if self.combat_manager.gold_reward > 0:
-                msg += f" e {self.combat_manager.gold_reward} G"
-            self.combat_manager.battle_log.append(msg)
-            
-            # Gera e adiciona loot
-            loot = self.combat_manager.generate_loot()
-            if loot:
-                loot_msg = "Itens obtidos: " + ", ".join(loot)
-                self.combat_manager.battle_log.append(loot_msg)
-                for item_name in loot:
-                    self.context.player.inventory.add_item(item_name)
-            
-            for hero in self.context.party:
-                hero.gain_xp(self.combat_manager.xp_reward)
-                hero.gold += self.combat_manager.gold_reward
 
-            # Delay antes de fechar para o jogador ler o log (opcional, por enquanto fecha)
-            self.manager.pop()
+    def _handle_battle_end(self):
+        if self.combat_manager.winner == "Party":
+            # Obtém e exibe recompensas do domínio
+            reward_msgs = self.combat_manager.resolve_rewards()
+            self.combat_manager.battle_log.extend(reward_msgs)
+            
+            # Limpeza do mundo (O Inimigo morre)
             tx = int(self.enemy_world_pos.x // self.context.world.tile_size)
             ty = int(self.enemy_world_pos.y // self.context.world.tile_size)
             self.context.world.remove_interactable(tx, ty)
-            # Removemos o trigger do mundo, mas não precisamos necessariamente 
-            # alterar as coordenadas do objeto enemy_world_pos se ele for compartilhado
-            # self.enemy_world_pos.x, self.enemy_world_pos.y = -100, -100
+        
+        elif self.combat_manager.winner == "Enemies":
+            print("Game Over!")
+            # Reset simples (Teleporte para o início e cura)
+            self.context.player.hp = self.context.player.max_hp
+            self.context.player.position.x, self.context.player.position.y = 64, 64
+
+        # Volta para o mapa
+        self.manager.pop()
 
     def update(self, dt):
+        if self.combat_manager.is_over:
+            return
+
         ready_entity = self.combat_manager.update(dt)
+        
         if ready_entity and ready_entity in self.combat_manager.enemies:
-            from src.models.status import StatusManager
-            if StatusManager.is_paralyzed(ready_entity):
-                self.combat_manager.battle_log.append(f"{ready_entity.name} está paralisado e não pode agir!")
-                self.combat_manager.atb_states[ready_entity] = 0.0
-                self.combat_manager.active_entity = None
-                return
-
-            # Enemy AI: Uses a random skill if it has any, otherwise attacks
-            import random
-            available_skills = list(ready_entity.skills)
-            if available_skills and random.random() < 0.7: # 70% chance to use a skill
-                skill_name = random.choice(available_skills)
-                self.combat_manager.execute_action(ready_entity, "Skill", self.context.party[0], ability_name=skill_name)
-            else:
-                self.combat_manager.execute_action(ready_entity, "Attack", self.context.party[0])
-
-            if self.context.player.hp <= 0:
-                print("Game Over!")
-                # Reset simple logic
-                self.context.player.hp = self.context.player.max_hp
-                self.context.player.position.x, self.context.player.position.y = 64, 64
-                self.manager.pop()
+            # Domain handles AI and paralysis check
+            self.combat_manager.handle_enemy_turn(ready_entity)
+            
+            # Check if enemy action ended the battle (Player death)
+            if self.combat_manager.is_over:
+                self._handle_battle_end()
 
     def draw(self, screen):
         # Limpa a tela antes de desenhar o combate para não sobrepor o mapa
