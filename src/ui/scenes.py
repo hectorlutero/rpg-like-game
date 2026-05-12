@@ -6,6 +6,7 @@ class GameContext:
         self.party = [player]
         self.save_manager = None # Será injetado no main
         self.running = True
+        self.opened_chests = set() #IDs de baús abertos
 
 class Scene:
     """Interface base para todas as cenas do jogo."""

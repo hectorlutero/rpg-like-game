@@ -13,6 +13,7 @@ class ExplorationScene(Scene):
         self.npc = npc
         self.enemy_pos = enemy_pos
         self.active_dialogue = None
+        self.active_speaker = "Mundo"
         self.selected_choice_index = 0
         self.player_speed = 4
 
@@ -44,6 +45,9 @@ class ExplorationScene(Scene):
                     
                     target = self.context.world.get_interactable_at(tx, ty)
                     if target:
+                        # Define quem está falando (NPC tem nome, Baú/Livro usa Mundo)
+                        self.active_speaker = target.name if hasattr(target, 'name') else "Mundo"
+                        
                         result = target.on_interact(self.context)
                         
                         # Se for uma string (feedback), mostramos como um diálogo simples
@@ -60,7 +64,7 @@ class ExplorationScene(Scene):
                 
                 # Save/Load/Rest
                 if event.key == pygame.K_k: # K for Keep (Save)
-                    if self.context.save_manager.save_game(self.context.player):
+                    if self.context.save_manager.save_game(self.context):
                         print("Jogo Salvo com Sucesso!")
                 
                 elif event.key == pygame.K_r: # R for Rest
@@ -108,12 +112,21 @@ class ExplorationScene(Scene):
         
         # Draw all interactables in the world (simple visualization)
         for (tx, ty), obj in self.context.world.interactables.items():
-            from src.models.interaction import MagicBook
+            from src.models.interaction import MagicBook, TrainingObject, Chest
             if isinstance(obj, MagicBook):
                 pygame.draw.rect(screen, (150, 50, 255), (tx * 32 + 8, ty * 32 + 8, 16, 16))
-            from src.models.interaction import TrainingObject
-            if isinstance(obj, TrainingObject):
+            elif isinstance(obj, TrainingObject):
                 pygame.draw.rect(screen, (150, 100, 50), (tx * 32 + 4, ty * 32 + 4, 24, 24))
+            elif isinstance(obj, Chest):
+                color = (255, 200, 0) if not obj.is_open else (80, 40, 0)
+                pygame.draw.rect(screen, color, (tx * 32 + 6, ty * 32 + 6, 20, 20))
+                if not obj.is_open:
+                    pygame.draw.rect(screen, (0, 0, 0), (tx * 32 + 6, ty * 32 + 14, 20, 2), 1)
+            from src.ui.shop_scene import Shopkeeper
+            if isinstance(obj, Shopkeeper):
+                pygame.draw.rect(screen, (180, 180, 50), (tx * 32 + 4, ty * 32 + 4, 24, 24))
+                pygame.draw.rect(screen, (255, 255, 255), (tx * 32 + 10, ty * 32 + 8, 4, 4)) # Olhos
+                pygame.draw.rect(screen, (255, 255, 255), (tx * 32 + 18, ty * 32 + 8, 4, 4))
 
         # Player (Blue Square)
         px, py = self.context.player.position.x, self.context.player.position.y
@@ -134,18 +147,31 @@ class ExplorationScene(Scene):
         if self.active_dialogue:
             pygame.draw.rect(screen, (0, 0, 0), (50, 400, 700, 150))
             pygame.draw.rect(screen, (255, 255, 255), (50, 400, 700, 150), 2)
-            self._draw_text(screen, self.npc.name + ":", 70, 415, size=20, color=(200, 200, 50))
-            self._draw_text(screen, self.active_dialogue.get_current_line(), 70, 445, size=20)
+            
+            # Speaker
+            self._draw_text(screen, self.active_speaker + ":", 70, 415, size=20, color=(200, 200, 50), align="left")
+            
+            # Texto com suporte a quebra de linha (\n)
+            text_lines = self.active_dialogue.get_current_line().split("\n")
+            for i, line in enumerate(text_lines):
+                self._draw_text(screen, line, 70, 445 + (i * 25), size=20, align="left")
+            
+            # Choices
             choices = self.active_dialogue.get_current_choices()
             if choices:
                 for i, choice_text in enumerate(choices.keys()):
                     color = (255, 255, 0) if i == self.selected_choice_index else (200, 200, 200)
-                    self._draw_text(screen, f"> {choice_text}", 100, 480 + (i * 25), size=18, color=color)
+                    # Desloca choices para baixo se houver múltiplas linhas de texto
+                    y_pos = 480 + (len(text_lines)-1)*20 + (i * 25)
+                    self._draw_text(screen, f"> {choice_text}", 100, y_pos, size=18, color=color, align="left")
 
         # UI Overlay (Energy)
         self._draw_text(screen, f"Energia: {self.context.player.energy}/3", 20, 20, size=20, color=(255, 255, 0))
 
-    def _draw_text(self, screen, text, x, y, size=24, color=(255, 255, 255)):
+    def _draw_text(self, screen, text, x, y, size=24, color=(255, 255, 255), align="left"):
         font = pygame.font.SysFont("Arial", size)
-        text_surface = font.render(text, True, color)
-        screen.blit(text_surface, (x, y))
+        surf = font.render(text, True, color)
+        rect = surf.get_rect()
+        if align == "center": rect.center = (x, y)
+        else: rect.topleft = (x, y)
+        screen.blit(surf, rect)

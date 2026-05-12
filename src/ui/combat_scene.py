@@ -93,6 +93,17 @@ class CombatScene(Scene):
         
         # Check for victory
         if all(e.hp <= 0 for e in self.combat_manager.enemies):
+            # Adiciona recompensas
+            msg = f"VITÓRIA! Ganhou {self.combat_manager.xp_reward} XP"
+            if self.combat_manager.gold_reward > 0:
+                msg += f" e {self.combat_manager.gold_reward} G"
+            self.combat_manager.battle_log.append(msg)
+            
+            for hero in self.context.party:
+                hero.gain_xp(self.combat_manager.xp_reward)
+                hero.gold += self.combat_manager.gold_reward
+
+            # Delay antes de fechar para o jogador ler o log (opcional, por enquanto fecha)
             self.manager.pop()
             tx = int(self.enemy_world_pos.x // self.context.world.tile_size)
             ty = int(self.enemy_world_pos.y // self.context.world.tile_size)

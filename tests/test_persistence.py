@@ -22,8 +22,16 @@ class TestPersistence(unittest.TestCase):
             os.remove(self.save_file)
 
     def test_save_and_load_character(self):
-        # Save the player
-        success = self.manager.save_game(self.player)
+        # Create a mock context
+        class MockContext:
+            def __init__(self, player):
+                self.player = player
+                self.opened_chests = set()
+        
+        ctx = MockContext(self.player)
+        
+        # Save the context
+        success = self.manager.save_game(ctx)
         self.assertTrue(success)
         self.assertTrue(os.path.exists(self.save_file))
 

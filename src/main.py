@@ -23,8 +23,9 @@ def main():
     save_manager = SaveManager("savegame.json")
     save_data = save_manager.load_game()
 
+    # --- Setup Context and Manager ---
+    player = None # placeholder
     if save_data:
-        # Simplificando reconstrução para o refactor
         char_class = save_manager.class_map.get(save_data['class'], Warrior)()
         player = Character(save_data['name'], char_class, level=save_data['level'])
         player.hp = save_data['hp']
@@ -47,44 +48,59 @@ def main():
     else:
         player = Character("Herói", Warrior())
         player.position.x, player.position.y = 64, 64
-        # Teste inicial: Ouro e uma Arma
+        # Teste inicial
         from src.models.items import EQUIPMENT_DATA
         player.gold = 50
         player.equip_item(EQUIPMENT_DATA["Espada de Ferro"])
 
-    # --- Setup Context and Manager ---
     context = GameContext(player, world)
     context.save_manager = save_manager
-    context.screen = screen # Para facilitar acesso na UI
+    context.screen = screen
     
+    # Restaura estado do mundo
+    if save_data:
+        context.opened_chests = set(save_data.get('opened_chests', []))
+
     manager = SceneManager(context)
-    context.scene_manager = manager # Para que interactables possam fazer push de cenas
+    context.scene_manager = manager
     
-    # Define NPCs e Inimigos iniciais registrados no MUNDO
+    # Define NPCs e Inimigos
     npc = NPC("Guarda", Position(400, 300), {
         0: {"text": "Olá! Sistema de interação direcional ativado.", "choices": {"Incrível": 1, "Top": 1}},
         1: {"text": "Agora você só fala comigo se estiver de frente!", "choices": None}
     })
-    # Registra o NPC no tile correspondente (400/32 = 12.5 -> tile 12, 300/32 = 9.3 -> tile 9)
     world.add_interactable(400 // 32, 300 // 32, npc)
 
     from src.models.combat import EnemyInteractable
     enemy_pos = Position(200, 400)
-    enemy_trigger = EnemyInteractable("Slime", Warrior(), 1, enemy_pos)
+    # Slime agora dá 30 de Ouro e 150 de XP
+    enemy_trigger = EnemyInteractable("Slime", Warrior(), 1, enemy_pos, gold_yield=30, xp_yield=150)
     world.add_interactable(200 // 32, 400 // 32, enemy_trigger)
 
-    # Livro de Magia
-    from src.models.interaction import MagicBook
-    fireball_book = MagicBook("Bola de Fogo", int_threshold=10, min_level=1)
-    world.add_interactable(150 // 32, 100 // 32, fireball_book) # Perto do início
+    # NOVO: Mercador
+    from src.ui.shop_scene import Shopkeeper
+    merchant = Shopkeeper("Mercador Errante", ["Espada de Ferro", "Armadura de Couro", "Anel de Inteligência"])
+    # Coloca o mercador no tile (8, 10)
+    world.add_interactable(8, 10, merchant)
 
-    # Livro de Skill Física (Corte Rápido)
+    # Livros e Objetos de Treino
+    from src.models.interaction import MagicBook, TrainingObject, Chest
+    from src.models.items import EQUIPMENT_DATA
+    
+    fireball_book = MagicBook("Bola de Fogo", int_threshold=10, min_level=1)
+    world.add_interactable(150 // 32, 100 // 32, fireball_book)
+
     fast_cut_book = MagicBook("Corte Rápido", int_threshold=5, min_level=1)
     world.add_interactable(100 // 32, 200 // 32, fast_cut_book)
 
-    from src.models.interaction import TrainingObject
     dummy = TrainingObject("Boneco de Treino", "forca")
     world.add_interactable(300 // 32, 100 // 32, dummy)
+
+    # NOVO: Baú de Tesouro
+    chest = Chest(item=EQUIPMENT_DATA["Escudo de Madeira"], gold=100, chest_id="spawn_chest_1")
+    if "spawn_chest_1" in context.opened_chests:
+        chest.is_open = True
+    world.add_interactable(500 // 32, 100 // 32, chest)
     
     # Inicia com a cena de exploração
     manager.push(ExplorationScene(manager, npc, enemy_pos))

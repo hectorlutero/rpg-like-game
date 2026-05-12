@@ -66,6 +66,35 @@ class TrainingObject(Interactable):
         
         return f"Seu treino de {self.name} foi produtivo! Sua {attr_display} aumentou."
 
+class Chest(Interactable):
+    def __init__(self, item=None, gold=0, chest_id=None):
+        self.item = item # Equipment or Item object
+        self.gold = gold
+        self.chest_id = chest_id # Essential for persistence
+        self.is_open = False
+
+    def on_interact(self, context):
+        if self.is_open:
+            return "O baú está vazio."
+        
+        player = context.player
+        self.is_open = True
+        
+        # Track in context for persistence
+        if self.chest_id:
+            context.opened_chests.add(self.chest_id)
+
+        msg = "Você abriu o baú!"
+        if self.gold > 0:
+            player.gold += self.gold
+            msg += f"\nGanhou {self.gold} G!"
+        
+        if self.item:
+            player.inventory.add_item(self.item.name)
+            msg += f"\nEncontrou {self.item.name}!"
+            
+        return msg
+
 class SelectionManager:
     """Gerenciador universal de navegação em listas (menus, combate, etc)."""
     def __init__(self, options=None):

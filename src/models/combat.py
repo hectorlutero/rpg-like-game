@@ -3,19 +3,21 @@ import math
 from src.models.interaction import Interactable
 
 class EnemyInteractable(Interactable):
-    def __init__(self, name, character_class, level, world_pos):
+    def __init__(self, name, character_class, level, world_pos, gold_yield=50, xp_yield=100):
         self.name = name
         self.character_class = character_class
         self.level = level
-        self.world_pos = world_pos # Reference for removal
+        self.world_pos = world_pos 
+        self.gold_yield = gold_yield
+        self.xp_yield = xp_yield
 
     def on_interact(self, context):
         from src.ui.combat_scene import CombatScene
         from src.models.character import Character
         enemy = Character(self.name, self.character_class, level=self.level)
         enemy.hp = 30
-        enemy.weakness = "Ice" # Slimes are weak to Ice
-        cm = CombatManager(context.party, [enemy])
+        enemy.weakness = "Ice" 
+        cm = CombatManager(context.party, [enemy], gold_reward=self.gold_yield, xp_reward=self.xp_yield)
         return CombatScene(context.scene_manager, cm, self.world_pos)
 
 class DamageCalculator:
@@ -56,9 +58,11 @@ class DamageCalculator:
         return max(0, min(100, int(chance)))
 
 class CombatManager:
-    def __init__(self, party, enemies):
+    def __init__(self, party, enemies, gold_reward=0, xp_reward=0):
         self.party = party  # List of Character objects
         self.enemies = enemies  # List of Character objects
+        self.gold_reward = gold_reward
+        self.xp_reward = xp_reward
         self.all_entities = party + enemies
         
         # Initialize ATB meters (0 to 100)

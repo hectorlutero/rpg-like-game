@@ -23,8 +23,9 @@ class SaveManager:
             "Rogue": Rogue
         }
 
-    def save_game(self, player):
-        """Serializes player data to a JSON file."""
+    def save_game(self, context):
+        """Serializes player and world data to a JSON file."""
+        player = context.player
         try:
             data = {
                 "name": player.name,
@@ -38,6 +39,7 @@ class SaveManager:
                 "skills": list(player.skills),
                 "inventory": player.inventory.items,
                 "equipment": {slot: (item.name if item else None) for slot, item in player.equipment.items()},
+                "opened_chests": list(context.opened_chests),
                 "position": {
                     "x": player.position.x,
                     "y": player.position.y
