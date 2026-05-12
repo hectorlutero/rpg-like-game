@@ -1,54 +1,38 @@
+import json
+import os
+
 class BaseClass:
-    def __init__(self):
-        self.multipliers = {}
-        self.gain_rates = {}
-        self.initial_stats = {}
-        self.proficiencies = {} # {'sword': 1.2}
+    _data = None
+
+    def __init__(self, class_name):
+        if BaseClass._data is None:
+            self._load_data()
+        
+        data = BaseClass._data.get(class_name, {})
+        self.multipliers = data.get("multipliers", {})
+        self.gain_rates = data.get("gain_rates", {})
+        self.initial_stats = data.get("initial_stats", {})
+        self.proficiencies = data.get("proficiencies", {})
+
+    def _load_data(self):
+        # Determine path relative to this file or root
+        # For simplicity, assuming running from root
+        path = "data/classes.json"
+        if not os.path.exists(path):
+            # Fallback for tests if needed, but path should be root
+            pass
+        
+        with open(path, 'r') as f:
+            BaseClass._data = json.load(f)
 
 class Warrior(BaseClass):
     def __init__(self):
-        super().__init__()
-        self.initial_stats = {
-            'vida': 100, 'mana': 20, 'agilidade': 8, 'forca': 10, 'inteligencia': 5
-        }
-        self.multipliers = {
-            'vida': 1.2, 'mana': 0.8, 'agilidade': 1.0, 'forca': 1.5, 'inteligencia': 0.9
-        }
-        self.gain_rates = {
-            'vida': 10.0, 'mana': 2.0, 'agilidade': 1.0, 'forca': 2.0, 'inteligencia': 0.5
-        }
-        self.proficiencies = {
-            'sword': 1.2, 'shield': 1.2, 'heavy_armor': 1.1
-        }
+        super().__init__("Warrior")
 
 class Mage(BaseClass):
     def __init__(self):
-        super().__init__()
-        self.initial_stats = {
-            'vida': 60, 'mana': 100, 'agilidade': 10, 'forca': 5, 'inteligencia': 10
-        }
-        self.multipliers = {
-            'vida': 0.8, 'mana': 1.5, 'agilidade': 1.0, 'forca': 0.6, 'inteligencia': 1.8
-        }
-        self.gain_rates = {
-            'vida': 5.0, 'mana': 10.0, 'agilidade': 1.0, 'forca': 0.5, 'inteligencia': 5.0
-        }
-        self.proficiencies = {
-            'staff': 1.3, 'robe': 1.1
-        }
+        super().__init__("Mage")
 
 class Rogue(BaseClass):
     def __init__(self):
-        super().__init__()
-        self.initial_stats = {
-            'vida': 80, 'mana': 40, 'agilidade': 12, 'forca': 8, 'inteligencia': 8
-        }
-        self.multipliers = {
-            'vida': 1.0, 'mana': 1.0, 'agilidade': 1.6, 'forca': 1.1, 'inteligencia': 1.2
-        }
-        self.gain_rates = {
-            'vida': 7.0, 'mana': 4.0, 'agilidade': 4.0, 'forca': 1.5, 'inteligencia': 2.0
-        }
-        self.proficiencies = {
-            'dagger': 1.4, 'leather_armor': 1.2
-        }
+        super().__init__("Rogue")

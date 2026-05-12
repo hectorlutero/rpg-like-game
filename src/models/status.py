@@ -1,4 +1,11 @@
 import random
+from src.models.stats import Modifier, ModifierType
+
+# Define which status effects affect which attributes
+STATUS_ATTRIBUTES = {
+    'paralysis': [('agilidade', -0.5, ModifierType.PERCENT)],
+    'poison': [('forca', -0.1, ModifierType.PERCENT)],
+}
 
 class StatusManager:
     @staticmethod
@@ -29,6 +36,12 @@ class StatusManager:
                 'duration': duration,
                 'potency': potency
             }
+            
+            # Apply Attribute Modifiers
+            if status_type in STATUS_ATTRIBUTES:
+                for attr, val, mod_type in STATUS_ATTRIBUTES[status_type]:
+                    defender.add_temporary_modifier(attr, Modifier(val, mod_type, source=status_type))
+            
             return True, f"{defender.name} foi afetado por {status_type.capitalize()}!"
         return False, f"{defender.name} resistiu a {status_type.capitalize()}."
 
@@ -51,6 +64,8 @@ class StatusManager:
         
         for status in expired:
             del entity.status_effects[status]
+            # Remove Attribute Modifiers
+            entity.remove_temporary_modifiers_from_source(status)
             logs.append(f"O efeito de {status.capitalize()} em {entity.name} acabou.")
             
         return logs

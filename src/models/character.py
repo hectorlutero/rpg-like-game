@@ -1,11 +1,13 @@
 from src.models.world import Position
 from src.models.persistence import Inventory
+from src.models.stats import Stat, Modifier, ModifierType
 
 class Character:
     def __init__(self, name, character_class, base_stats=None, level=1):
         self.name = name
         self.character_class = character_class
-        self.base_stats = base_stats if base_stats is not None else character_class.initial_stats
+        # Use copy to avoid shared mutable state from class data
+        self.base_stats = base_stats if base_stats is not None else character_class.initial_stats.copy()
         self.level = level
         self.xp = 0
         self.xp_to_next_level = 100
@@ -17,6 +19,8 @@ class Character:
             "armor": None,
             "accessory": None
         }
+        
+        self.temp_modifiers = {} # {stat_name: [Modifier, ...]}
         
         # Current resources
         self.current_hp = self.get_attribute('vida')
@@ -72,6 +76,15 @@ class Character:
                 prof_mult = max(prof_mult, self.character_class.proficiencies[tag])
         return prof_mult
 
+    def add_temporary_modifier(self, stat_name, modifier):
+        if stat_name not in self.temp_modifiers:
+            self.temp_modifiers[stat_name] = []
+        self.temp_modifiers[stat_name].append(modifier)
+
+    def remove_temporary_modifiers_from_source(self, source):
+        for stat_name in self.temp_modifiers:
+            self.temp_modifiers[stat_name] = [m for m in self.temp_modifiers[stat_name] if m.source != source]
+
     def get_attribute(self, name):
         """Calculates final attribute considering base, level, class and equipment."""
         base_value = self.base_stats.get(name, 0)
@@ -81,9 +94,9 @@ class Character:
         # Base calculation
         final_base = int((base_value + (self.level * gain_rate)) * multiplier)
         
-        total_flat_bonus = 0
-        total_percent_bonus = 0.0
+        stat = Stat(name, final_base)
         
+        # 1. Equipment Modifiers
         for eq in self.equipment.values():
             if not eq: continue
             
@@ -91,13 +104,20 @@ class Character:
             
             # Flat Bonuses
             flat = eq.bonuses.get(name, 0)
-            total_flat_bonus += int(flat * prof_mult)
+            if flat:
+                stat.add_modifier(Modifier(int(flat * prof_mult), ModifierType.FLAT, source=f"Equip:{eq.name}"))
             
             # Percentage Bonuses
             perc = getattr(eq, 'percent_bonuses', {}).get(name, 0.0)
-            total_percent_bonus += (perc * prof_mult)
+            if perc:
+                stat.add_modifier(Modifier(perc * prof_mult, ModifierType.PERCENT, source=f"Equip:{eq.name}"))
 
-        return int((final_base + total_flat_bonus) * (1.0 + total_percent_bonus))
+        # 2. Temporary Modifiers (Buffs/Debuffs)
+        if name in self.temp_modifiers:
+            for mod in self.temp_modifiers[name]:
+                stat.add_modifier(mod)
+
+        return stat.calculate()
 
     @property
     def defense_absolute(self):
