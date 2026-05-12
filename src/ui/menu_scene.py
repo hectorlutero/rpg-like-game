@@ -95,9 +95,27 @@ class MenuScene(Scene):
 
     def _draw_status_tab(self, screen):
         col1_x, col2_x, col3_x = 70, 310, 540
+        
+        # Vida e Mana (Barras horizontais)
+        self._draw_text(screen, "VITALIDADE", col1_x, 140, color=(0, 255, 255), align="left", size=20)
+        
+        # Barra de Vida
+        hp_y = 170
+        pygame.draw.rect(screen, (50, 0, 0), (col1_x, hp_y, 180, 15))
+        hp_ratio = self.player.hp / self.player.max_hp if self.player.max_hp > 0 else 0
+        pygame.draw.rect(screen, (0, 200, 0), (col1_x, hp_y, int(180 * hp_ratio), 15))
+        self._draw_text(screen, f"HP: {self.player.hp}/{self.player.max_hp}", col1_x + 90, hp_y + 7, size=14, align="center")
+        
+        # Barra de Mana
+        mana_y = 190
+        pygame.draw.rect(screen, (0, 0, 50), (col1_x, mana_y, 180, 15))
+        mana_ratio = self.player.mana / self.player.max_mana if self.player.max_mana > 0 else 0
+        pygame.draw.rect(screen, (0, 100, 255), (col1_x, mana_y, int(180 * mana_ratio), 15))
+        self._draw_text(screen, f"MP: {self.player.mana}/{self.player.max_mana}", col1_x + 90, mana_y + 7, size=14, align="center")
+
         # Reutilizando lógica anterior para STATUS...
-        self._draw_text(screen, "ATRIBUTOS", col1_x, 150, color=(0, 255, 255), align="left", size=22)
-        attr_y = 190
+        self._draw_text(screen, "ATRIBUTOS", col1_x, 230, color=(0, 255, 255), align="left", size=20)
+        attr_y = 260
         for label, val in [("Força", self.player.get_attribute('forca')), 
                           ("Agilidade", self.player.get_attribute('agilidade')), 
                           ("Inteligência", self.player.get_attribute('inteligencia')),
@@ -130,6 +148,11 @@ class MenuScene(Scene):
     def _draw_inventory_tab(self, screen):
         self._draw_text(screen, "MOCHILA (ITENS DISPONÍVEIS)", 70, 150, color=(0, 255, 255), align="left", size=22)
         
+        # Resumo de Vida/Mana no Inventário (Sidebar Direita, topo)
+        res_x = 420
+        self._draw_text(screen, f"Sua Vida: {self.player.hp}/{self.player.max_hp}", res_x, 110, size=16, color=(0, 255, 0), align="left")
+        self._draw_text(screen, f"Sua Mana: {self.player.mana}/{self.player.max_mana}", res_x + 160, 110, size=16, color=(0, 100, 255), align="left")
+
         if not self.player.inventory.items:
             self._draw_text(screen, "Sua mochila está vazia.", 400, 300, size=24, color=(150, 150, 150))
             return
