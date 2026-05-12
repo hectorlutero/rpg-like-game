@@ -1,10 +1,7 @@
 import pygame
 from src.ui.scenes import Scene
-from src.models.dialogue import DialogueManager
-from src.models.combat import CombatManager
-from src.models.character import Character
-from src.models.classes import Warrior
-from src.models.world import Position
+from src.models.interaction import InteractionManager
+from src.ui.interaction_renderer import InteractionRenderer
 
 class ExplorationScene(Scene):
     def __init__(self, manager, npc, enemy_pos):
@@ -12,9 +9,8 @@ class ExplorationScene(Scene):
         self.context = manager.context
         self.npc = npc
         self.enemy_pos = enemy_pos
-        self.active_dialogue = None
-        self.active_speaker = "Mundo"
-        self.selected_choice_index = 0
+        self.interaction_manager = InteractionManager(self.context, self.manager)
+        self.interaction_renderer = InteractionRenderer()
         self.player_speed = 4
 
     def handle_event(self, event):
@@ -23,48 +19,14 @@ class ExplorationScene(Scene):
             return
 
         if event.type == pygame.KEYDOWN:
-            if self.active_dialogue:
-                choices = self.active_dialogue.get_current_choices()
-                if choices:
-                    choice_list = list(choices.keys())
-                    if event.key == pygame.K_UP: self.selected_choice_index = (self.selected_choice_index - 1) % len(choice_list)
-                    elif event.key == pygame.K_DOWN: self.selected_choice_index = (self.selected_choice_index + 1) % len(choice_list)
-                    elif event.key in [pygame.K_SPACE, pygame.K_RETURN]:
-                        self.active_dialogue.make_choice(choice_list[self.selected_choice_index])
-                        self.selected_choice_index = 0
-                else:
-                    if event.key in [pygame.K_SPACE, pygame.K_RETURN]:
-                        self.active_dialogue.next_line()
-                        if self.active_dialogue.is_finished(): self.active_dialogue = None
+            if self.interaction_manager.is_active:
+                if event.key == pygame.K_UP: self.interaction_manager.process_command("up")
+                elif event.key == pygame.K_DOWN: self.interaction_manager.process_command("down")
+                elif event.key in [pygame.K_SPACE, pygame.K_RETURN]:
+                    self.interaction_manager.process_command("confirm")
             else:
                 if event.key in [pygame.K_e, pygame.K_SPACE]:
-                    # Nova lógica direcional baseada em tiles
-                    tx = int(self.context.player.position.x // self.context.world.tile_size)
-                    ty = int(self.context.player.position.y // self.context.world.tile_size)
-                    
-                    if self.context.player.facing_direction == "N": ty -= 1
-                    elif self.context.player.facing_direction == "S": ty += 1
-                    elif self.context.player.facing_direction == "W": tx -= 1
-                    elif self.context.player.facing_direction == "E": tx += 1
-                    
-                    target = self.context.world.get_interactable_at(tx, ty)
-                    if target:
-                        # Define quem está falando (NPC tem nome, Baú/Livro usa Mundo)
-                        self.active_speaker = target.name if hasattr(target, 'name') else "Mundo"
-                        
-                        result = target.on_interact(self.context)
-                        
-                        # Se for uma string (feedback), mostramos como um diálogo simples
-                        if isinstance(result, str):
-                            self.active_dialogue = DialogueManager([result])
-                        
-                        # Se o resultado for um DialogueManager, ativamos o diálogo
-                        elif isinstance(result, DialogueManager):
-                            self.active_dialogue = result
-                        
-                        # Se for uma cena (combate), fazemos o push
-                        elif isinstance(result, Scene):
-                            self.manager.push(result)
+                    self.interaction_manager.interact()
                 
                 # Save/Load/Rest
                 if event.key == pygame.K_k: # K for Keep (Save)
@@ -94,7 +56,7 @@ class ExplorationScene(Scene):
         if self.manager.active_scene != self:
             return
 
-        if not self.active_dialogue:
+        if not self.interaction_manager.is_active:
             keys = pygame.key.get_pressed()
             dx, dy = 0, 0
             if keys[pygame.K_LEFT] or keys[pygame.K_a]: dx = -self.player_speed
@@ -134,27 +96,11 @@ class ExplorationScene(Scene):
         elif self.context.player.facing_direction == "E":
             pygame.draw.rect(screen, indicator_color, (px + 12, py - 4, 4, 8))
         
-        # Draw Dialogue
-        if self.active_dialogue:
-            pygame.draw.rect(screen, (0, 0, 0), (50, 400, 700, 150))
-            pygame.draw.rect(screen, (255, 255, 255), (50, 400, 700, 150), 2)
-            
-            # Speaker
-            self._draw_text(screen, self.active_speaker + ":", 70, 415, size=20, color=(200, 200, 50), align="left")
-            
-            # Texto com suporte a quebra de linha (\n)
-            text_lines = self.active_dialogue.get_current_line().split("\n")
-            for i, line in enumerate(text_lines):
-                self._draw_text(screen, line, 70, 445 + (i * 25), size=20, align="left")
-            
-            # Choices
-            choices = self.active_dialogue.get_current_choices()
-            if choices:
-                for i, choice_text in enumerate(choices.keys()):
-                    color = (255, 255, 0) if i == self.selected_choice_index else (200, 200, 200)
-                    # Desloca choices para baixo se houver múltiplas linhas de texto
-                    y_pos = 480 + (len(text_lines)-1)*20 + (i * 25)
-                    self._draw_text(screen, f"> {choice_text}", 100, y_pos, size=18, color=color, align="left")
+        # Draw Interaction Overlay (Delegated)
+        if self.interaction_manager.is_active:
+            self.interaction_renderer.screen = screen
+            vm = self.interaction_manager.get_view_model()
+            self.interaction_renderer.render(vm)
 
         # UI Overlay (Energy)
         self._draw_text(screen, f"Energia: {self.context.player.energy}/3", 20, 20, size=20, color=(255, 255, 0), align="left")

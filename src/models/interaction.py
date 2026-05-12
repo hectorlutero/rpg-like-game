@@ -164,3 +164,79 @@ class SelectionManager:
         if 0 <= self.index < len(self.options):
             return self.options[self.index]
         return None
+
+
+class InteractionManager:
+    """Orquestrador de lógica de interação (Deep Module)."""
+    def __init__(self, context, scene_manager):
+        self.context = context
+        self.scene_manager = scene_manager
+        self.active_dialogue = None
+        self.active_speaker = "Mundo"
+        self.selected_index = 0
+
+    @property
+    def is_active(self):
+        return self.active_dialogue is not None
+
+    def interact(self):
+        player = self.context.player
+        world = self.context.world
+        
+        tx = int(player.position.x // world.tile_size)
+        ty = int(player.position.y // world.tile_size)
+        
+        if player.facing_direction == "N": ty -= 1
+        elif player.facing_direction == "S": ty += 1
+        elif player.facing_direction == "W": tx -= 1
+        elif player.facing_direction == "E": tx += 1
+        
+        target = world.get_interactable_at(tx, ty)
+        if target:
+            self.active_speaker = target.name if hasattr(target, 'name') else "Mundo"
+            result = target.on_interact(self.context)
+            
+            from src.models.dialogue import DialogueManager
+            from src.ui.scenes import Scene
+            
+            if isinstance(result, str):
+                self.active_dialogue = DialogueManager([result])
+            elif isinstance(result, DialogueManager):
+                self.active_dialogue = result
+            elif isinstance(result, Scene):
+                self.scene_manager.push(result)
+            
+            self.selected_index = 0
+
+    def process_command(self, cmd):
+        if not self.active_dialogue:
+            return
+
+        choices = self.active_dialogue.get_current_choices()
+        if choices:
+            choice_list = list(choices.keys())
+            if cmd == "up":
+                self.selected_index = (self.selected_index - 1) % len(choice_list)
+            elif cmd == "down":
+                self.selected_index = (self.selected_index + 1) % len(choice_list)
+            elif cmd in ["confirm", "space"]:
+                self.active_dialogue.make_choice(choice_list[self.selected_index])
+                self.selected_index = 0
+        else:
+            if cmd in ["confirm", "space"]:
+                self.active_dialogue.next_line()
+        
+        if self.active_dialogue and self.active_dialogue.is_finished():
+            self.active_dialogue = None
+
+    def get_view_model(self):
+        if not self.active_dialogue:
+            return None
+        
+        choices = self.active_dialogue.get_current_choices()
+        return {
+            "speaker": self.active_speaker,
+            "text": self.active_dialogue.get_current_line(),
+            "choices": list(choices.keys()) if choices else [],
+            "selected_index": self.selected_index
+        }

@@ -76,8 +76,8 @@ class TestScenesIntegration(unittest.TestCase):
         event = pygame.event.Event(pygame.KEYDOWN, {'key': pygame.K_SPACE})
         self.scene.handle_event(event)
         
-        # Verifica se o diálogo do baú foi ativado na cena
-        self.assertIsNotNone(self.scene.active_dialogue)
+        # Verifica se o diálogo do baú foi ativado na cena via InteractionManager
+        self.assertTrue(self.scene.interaction_manager.is_active)
         self.assertTrue(chest.is_open)
 
     def test_rendering_no_crash(self):
@@ -86,9 +86,9 @@ class TestScenesIntegration(unittest.TestCase):
         # 1. Estado Normal
         self.scene.draw(self.screen)
         
-        # 2. Com Diálogo Ativo (onde ocorreu o erro anterior)
+        # 2. Com Diálogo Ativo
         from src.models.dialogue import DialogueManager
-        self.scene.active_dialogue = DialogueManager(["Linha 1\nLinha 2"])
+        self.scene.interaction_manager.active_dialogue = DialogueManager(["Linha 1\nLinha 2"])
         self.scene.draw(self.screen)
         
         # 3. Com Menu Aberto

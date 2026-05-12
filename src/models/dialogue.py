@@ -24,13 +24,20 @@ class NPC(Interactable):
         pygame.draw.rect(screen, (255, 255, 255), (pos[0] + 10, pos[1] + 2, 12, 4))
 
 class DialogueManager:
-    def __init__(self, data, start_index=0):
+    def __init__(self, data, start_index=None):
         self.data = data
-        self.current_index = start_index
         self.finished = False
         
         # Determine if data is a list (linear) or dict (branching)
         self.is_branching = isinstance(data, dict)
+        
+        if start_index is not None:
+            self.current_index = start_index
+        elif self.is_branching:
+            # Pega a primeira chave se for dicionário e não especificado
+            self.current_index = list(data.keys())[0] if data else None
+        else:
+            self.current_index = 0
 
     def get_current_line(self):
         if self.finished:
