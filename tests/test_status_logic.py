@@ -56,19 +56,18 @@ class TestStatusSystem(unittest.TestCase):
         self.assertTrue(StatusManager.is_paralyzed(self.defender))
 
     def test_paralysis_no_longer_freezes_atb(self):
-        from src.models.atb import ATBEngine
-        engine = ATBEngine()
-        engine.add_combatant(self.defender)
+        from src.models.combat import CombatManager
+        cm = CombatManager([self.defender], [])
         
         # Apply paralysis
         self.defender.status_effects['paralysis'] = {'duration': 2}
         
-        # Tick engine
-        engine.tick(1.0)
+        # Tick combat manager
+        cm.update(1.0)
         
-        # Meter should GROW now (agility * 1.0)
+        # Meter should GROW now (agility * 2.0 * dt)
         agility = self.defender.get_attribute('agilidade')
-        self.assertEqual(engine.get_meter(self.defender), agility * 1.0)
+        self.assertEqual(cm.atb_states[self.defender], agility * 2.0 * 1.0)
 
     def test_combat_manager_processes_status_on_turn(self):
         from src.models.combat import CombatManager

@@ -1,7 +1,17 @@
 import pytest
 from src.models.character import Character
-from src.models.classes import Warrior
+from src.models.classes import Warrior, Rogue
 from src.models.combat import CombatManager
+
+def test_combat_manager_atb_speed_difference():
+    warrior = Character("Warrior", Warrior()) # Agility 8
+    rogue = Character("Rogue", Rogue())       # Agility ~19
+    
+    cm = CombatManager([warrior, rogue], [])
+    
+    cm.update(1.0)
+    
+    assert cm.atb_states[rogue] > cm.atb_states[warrior]
 
 def test_combat_manager_victory_and_rewards_depth():
     # Setup
