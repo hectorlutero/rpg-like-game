@@ -37,8 +37,8 @@ class ShopScene(Scene):
     def _toggle_mode(self):
         if self.state == "BUY":
             self.state = "SELL"
-            # In SELL mode, items are what the player has
-            player_items = sorted(list(self.context.player.inventory.items.keys()))
+            # In SELL mode, items are what the player has (unique items)
+            player_items = sorted(list(set(self.context.player.inventory.items)))
             self.selector = SelectionManager(player_items)
             self.message = "O que deseja vender? (50% do valor)"
         else:
@@ -77,7 +77,7 @@ class ShopScene(Scene):
         self.context.player.inventory.remove_item(item_name)
         
         # Refresh selector
-        player_items = sorted(list(self.context.player.inventory.items.keys()))
+        player_items = sorted(list(set(self.context.player.inventory.items)))
         self.selector = SelectionManager(player_items)
         self.message = f"Vendeu {item_name} por {sell_price} G!"
 
