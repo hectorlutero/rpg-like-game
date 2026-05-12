@@ -1,10 +1,15 @@
 import math
+from src.models.interaction import Interactable
 
-class NPC:
+class NPC(Interactable):
     def __init__(self, name, position, dialogue_data=None):
         self.name = name
         self.position = position
         self.dialogue_data = dialogue_data
+
+    def on_interact(self, context):
+        """Returns a DialogueManager to be used by the scene."""
+        return DialogueManager(self.dialogue_data)
 
     def is_near(self, other_position, distance=32):
         dx = self.position.x - other_position.x

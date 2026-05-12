@@ -28,7 +28,6 @@ class TestMovement(unittest.TestCase):
 
     def test_collision_with_solid_tile(self):
         # Create a 3x3 map where (1,0) is solid
-        # Tiles: 0 = walkable, 1 = solid
         grid = [
             [0, 1, 0],
             [0, 0, 0],
@@ -36,15 +35,17 @@ class TestMovement(unittest.TestCase):
         ]
         world = World(grid, tile_size=32)
         hero = Character("Hero", Warrior())
-        hero.position = Position(0, 0) # Top-left tile
+        # Coloca o herói no centro do tile (0,0) -> (16, 16)
+        hero.position = Position(16, 16)
         
-        # Try to move into the solid tile at (1,0)
-        # Position (33, 0) would be inside tile (1,0)
-        can_move = world.can_move_to(hero, 33, 0)
+        # Tenta mover para o centro do tile (1,0) -> (48, 16)
+        # O tile (1,0) é sólido, então deve bloquear.
+        can_move = world.can_move_to(hero, 48, 16)
         self.assertFalse(can_move)
         
-        # Try to move to (0, 33) which is tile (0,1) - walkable
-        can_move = world.can_move_to(hero, 0, 33)
+        # Tenta mover para o centro do tile (0,1) -> (16, 48)
+        # O tile (0,1) é passável, deve permitir.
+        can_move = world.can_move_to(hero, 16, 48)
         self.assertTrue(can_move)
 
 if __name__ == '__main__':

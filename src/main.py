@@ -2,84 +2,95 @@ import pygame
 import sys
 from src.models.character import Character
 from src.models.classes import Warrior
-from src.models.world import World
+from src.models.world import World, Position
+from src.models.dialogue import NPC
+from src.models.persistence import SaveManager
+from src.ui.scenes import GameContext, SceneManager
+from src.ui.exploration_scene import ExplorationScene
 
 def main():
-    # Initialize Pygame
     pygame.init()
-    
-    # Screen settings
-    screen_width = 800
-    screen_height = 600
-    screen = pygame.display.set_mode((screen_width, screen_height))
-    pygame.display.set_caption("RPG Classic - Pygame")
-    
+    screen = pygame.display.set_mode((800, 600))
+    pygame.display.set_caption("RPG Classic - Refactored")
     clock = pygame.time.Clock()
     
-    # Simple map grid (0 = walkable, 1 = solid)
-    # 25x19 grid for 32x32 tiles (800/32=25, 600/32=18.75)
+    # --- Data Init ---
     map_grid = [[0 for _ in range(25)] for _ in range(20)]
-    # Add some walls
-    for i in range(25):
-        map_grid[0][i] = 1
-        map_grid[19][i] = 1
-    for i in range(20):
-        map_grid[i][0] = 1
-        map_grid[i][24] = 1
-        
+    for i in range(25): map_grid[0][i] = map_grid[19][i] = 1
+    for i in range(20): map_grid[i][0] = map_grid[i][24] = 1
     world = World(map_grid, tile_size=32)
     
-    # Initialize Player
-    player = Character("Herói", Warrior())
-    player.position.x = 64
-    player.position.y = 64
-    player_speed = 4
+    save_manager = SaveManager("savegame.json")
+    save_data = save_manager.load_game()
+
+    if save_data:
+        # Simplificando reconstrução para o refactor
+        char_class = save_manager.class_map.get(save_data['class'], Warrior)()
+        player = Character(save_data['name'], char_class, level=save_data['level'])
+        player.hp = save_data['hp']
+        player.xp = save_data['xp']
+        player.energy = save_data.get('energy', 3)
+        player.skills = set(save_data.get('skills', []))
+        player.position.x = save_data['position']['x']
+        player.position.y = save_data['position']['y']
+        print(f"Jogo carregado: {player.name}")
+    else:
+        player = Character("Herói", Warrior())
+        player.position.x, player.position.y = 64, 64
+
+    # --- Setup Context and Manager ---
+    context = GameContext(player, world)
+    context.save_manager = save_manager
+    context.screen = screen # Para facilitar acesso na UI
     
-    # Game Loop
-    running = True
-    while running:
-        dt = clock.tick(60) / 1000.0 # Delta time in seconds
+    manager = SceneManager(context)
+    context.scene_manager = manager # Para que interactables possam fazer push de cenas
+    
+    # Define NPCs e Inimigos iniciais registrados no MUNDO
+    npc = NPC("Guarda", Position(400, 300), {
+        0: {"text": "Olá! Sistema de interação direcional ativado.", "choices": {"Incrível": 1, "Top": 1}},
+        1: {"text": "Agora você só fala comigo se estiver de frente!", "choices": None}
+    })
+    # Registra o NPC no tile correspondente (400/32 = 12.5 -> tile 12, 300/32 = 9.3 -> tile 9)
+    world.add_interactable(400 // 32, 300 // 32, npc)
+
+    from src.models.combat import EnemyInteractable
+    enemy_pos = Position(200, 400)
+    enemy_trigger = EnemyInteractable("Slime", Warrior(), 1, enemy_pos)
+    world.add_interactable(200 // 32, 400 // 32, enemy_trigger)
+
+    # Livro de Magia
+    from src.models.interaction import MagicBook
+    fireball_book = MagicBook("Bola de Fogo", int_threshold=10, min_level=1)
+    world.add_interactable(150 // 32, 100 // 32, fireball_book) # Perto do início
+
+    # Livro de Skill Física (Corte Rápido)
+    fast_cut_book = MagicBook("Corte Rápido", int_threshold=5, min_level=1)
+    world.add_interactable(100 // 32, 200 // 32, fast_cut_book)
+
+    from src.models.interaction import TrainingObject
+    dummy = TrainingObject("Boneco de Treino", "forca")
+    world.add_interactable(300 // 32, 100 // 32, dummy)
+    
+    # Inicia com a cena de exploração
+    manager.push(ExplorationScene(manager, npc, enemy_pos))
+    
+    # --- Game Loop ---
+    while context.running:
+        dt = clock.tick(60) / 1000.0
         
-        # 1. Event Handling
+        # 1. Events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
+                context.running = False
+            manager.handle_event(event)
         
-        # 2. Input Handling (Movement)
-        keys = pygame.key.get_pressed()
-        dx, dy = 0, 0
-        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            dx = -player_speed
-        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            dx = player_speed
-        if keys[pygame.K_UP] or keys[pygame.K_w]:
-            dy = -player_speed
-        if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-            dy = player_speed
-            
-        # 3. Collision & Movement
-        if dx != 0 or dy != 0:
-            new_x = player.position.x + dx
-            new_y = player.position.y + dy
-            
-            # Simple collision check for the player center point
-            if world.can_move_to(player, new_x, new_y):
-                player.position.move(dx, dy)
+        # 2. Update
+        manager.update(dt)
         
-        # 4. Drawing
-        screen.fill((30, 30, 30)) # Dark background
-        
-        # Draw Map
-        for y, row in enumerate(world.grid):
-            for x, tile in enumerate(row):
-                if tile == 1: # Wall
-                    pygame.draw.rect(screen, (100, 100, 100), (x*32, y*32, 32, 32))
-                else: # Floor
-                    pygame.draw.rect(screen, (50, 50, 50), (x*32, y*32, 32, 32), 1)
-        
-        # Draw Player (simple blue square)
-        pygame.draw.rect(screen, (0, 100, 255), (player.position.x - 16, player.position.y - 16, 32, 32))
-        
+        # 3. Draw
+        screen.fill((30, 30, 30))
+        manager.draw(screen)
         pygame.display.flip()
         
     pygame.quit()

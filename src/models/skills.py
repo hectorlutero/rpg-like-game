@@ -1,19 +1,22 @@
-class Skill:
-    def __init__(self, name, int_threshold, mana_cost=0, power=1.0, skill_type="physical"):
+class Ability:
+    """Base class for Skills and Spells."""
+    def __init__(self, name, power, category="Skill", element=None, int_req=0, level_req=1, mana_cost=0):
         self.name = name
-        self.int_threshold = int_threshold
-        self.mana_cost = mana_cost
         self.power = power
-        self.skill_type = skill_type
+        self.category = category # "Skill" or "Spell"
+        self.element = element
+        self.int_req = int_req
+        self.level_req = level_req
+        self.mana_cost = mana_cost
 
-class SkillRegistry:
-    def __init__(self):
-        self.skills = []
-
-    def add_skill(self, skill):
-        self.skills.append(skill)
-
-    def get_available_skills(self, character):
-        char_int = character.get_attribute('inteligencia')
-        return [s for s in self.skills if char_int >= s.int_threshold]
-        # In the future, add class-specific checks here
+# Registry
+ABILITY_DATA = {
+    # Habilidades Físicas (Skills) - Sem custo de Mana
+    "Corte Rápido": Ability("Corte Rápido", power=1.5, category="Skill", int_req=5),
+    "Impacto Pesado": Ability("Impacto Pesado", power=2.2, category="Skill", int_req=12),
+    
+    # Feitiços (Spells) - Com custo de Mana
+    "Bola de Fogo": Ability("Bola de Fogo", power=2.0, category="Spell", element="Fire", int_req=10, mana_cost=10),
+    "Lança de Gelo": Ability("Lança de Gelo", power=1.8, category="Spell", element="Ice", int_req=15, mana_cost=8),
+    "Trovão": Ability("Trovão", power=2.5, category="Spell", element="Lightning", int_req=20, mana_cost=15)
+}

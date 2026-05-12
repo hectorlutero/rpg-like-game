@@ -13,18 +13,51 @@ class World:
         self.tile_size = tile_size
         self.width = len(grid[0]) if grid else 0
         self.height = len(grid) if grid else 0
+        self.interactables = {} # {(tile_x, tile_y): object}
+
+    def add_interactable(self, tx, ty, obj):
+        self.interactables[(tx, ty)] = obj
+
+    def remove_interactable(self, tx, ty):
+        if (tx, ty) in self.interactables:
+            del self.interactables[(tx, ty)]
+
+    def get_interactable_at(self, tx, ty):
+        return self.interactables.get((tx, ty))
+
+    def get_interactable_at_pixel(self, px, py):
+        tx = int(px // self.tile_size)
+        ty = int(py // self.tile_size)
+        return self.get_interactable_at(tx, ty)
 
     def can_move_to(self, entity, target_x, target_y):
-        # Convert pixel coordinates to grid coordinates
-        grid_x = int(target_x // self.tile_size)
-        grid_y = int(target_y // self.tile_size)
+        # A entidade tem 32x32 e o centro é (target_x, target_y)
+        # Vamos checar os 4 cantos da caixa de colisão.
+        # Usamos uma pequena margem (2px) para a colisão não ser "travada" demais.
+        half = self.tile_size // 2
+        margin = 2
+        
+        corners = [
+            (target_x - half + margin, target_y - half + margin), # Top-Left
+            (target_x + half - margin, target_y - half + margin), # Top-Right
+            (target_x - half + margin, target_y + half - margin), # Bottom-Left
+            (target_x + half - margin, target_y + half - margin)  # Bottom-Right
+        ]
 
-        # Check bounds
-        if grid_x < 0 or grid_x >= self.width or grid_y < 0 or grid_y >= self.height:
-            return False
+        for cx, cy in corners:
+            grid_x = int(cx // self.tile_size)
+            grid_y = int(cy // self.tile_size)
 
-        # Check if tile is solid (1 = solid)
-        if self.grid[grid_y][grid_x] == 1:
-            return False
+            # Check bounds
+            if grid_x < 0 or grid_x >= self.width or grid_y < 0 or grid_y >= self.height:
+                return False
+
+            # Check if tile is solid (1 = solid)
+            if self.grid[grid_y][grid_x] == 1:
+                return False
+
+            # Check for interactables (NPCs, Enemies, etc.)
+            if (grid_x, grid_y) in self.interactables:
+                return False
 
         return True
