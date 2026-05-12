@@ -3,6 +3,17 @@ import os
 
 from src.models.classes import Warrior, Mage, Rogue
 
+class Inventory:
+    def __init__(self, items=None):
+        self.items = items or []
+
+    def add_item(self, item_name):
+        self.items.append(item_name)
+
+    def remove_item(self, item_name):
+        if item_name in self.items:
+            self.items.remove(item_name)
+
 class SaveManager:
     def __init__(self, filename="savegame.json"):
         self.filename = filename
@@ -23,7 +34,10 @@ class SaveManager:
                 "mana": player.mana,
                 "xp": player.xp,
                 "energy": player.energy,
+                "gold": player.gold,
                 "skills": list(player.skills),
+                "inventory": player.inventory.items,
+                "equipment": {slot: (item.name if item else None) for slot, item in player.equipment.items()},
                 "position": {
                     "x": player.position.x,
                     "y": player.position.y

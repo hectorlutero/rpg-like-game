@@ -30,13 +30,27 @@ def main():
         player.hp = save_data['hp']
         player.xp = save_data['xp']
         player.energy = save_data.get('energy', 3)
+        player.gold = save_data.get('gold', 0)
         player.skills = set(save_data.get('skills', []))
+        player.inventory.items = save_data.get('inventory', [])
+        
+        # Carrega Equipamentos
+        from src.models.items import EQUIPMENT_DATA
+        eq_data = save_data.get('equipment', {})
+        for slot, item_name in eq_data.items():
+            if item_name in EQUIPMENT_DATA:
+                player.equipment[slot] = EQUIPMENT_DATA[item_name]
+
         player.position.x = save_data['position']['x']
         player.position.y = save_data['position']['y']
         print(f"Jogo carregado: {player.name}")
     else:
         player = Character("Herói", Warrior())
         player.position.x, player.position.y = 64, 64
+        # Teste inicial: Ouro e uma Arma
+        from src.models.items import EQUIPMENT_DATA
+        player.gold = 50
+        player.equip_item(EQUIPMENT_DATA["Espada de Ferro"])
 
     # --- Setup Context and Manager ---
     context = GameContext(player, world)

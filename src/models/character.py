@@ -1,5 +1,6 @@
 from src.models.attributes import AttributePackage
 from src.models.world import Position
+from src.models.persistence import Inventory
 
 class Character:
     def __init__(self, name, character_class, base_stats=None, level=1):
@@ -11,8 +12,13 @@ class Character:
         self.xp_to_next_level = 100
         self.attributes = AttributePackage()
         
-        self.defense_absolute = 0
-        self.defense_relative = 0.0
+        # Equipment Slots
+        self.equipment = {
+            "weapon": None,
+            "shield": None,
+            "armor": None,
+            "accessory": None
+        }
         
         # Current resources
         self.current_hp = self.get_attribute('vida')
@@ -23,6 +29,16 @@ class Character:
         self.facing_direction = "S" # South (down) default
         self._energy = 3
         self.skills = set() # Set of skill names
+        self._gold = 0
+        self.inventory = Inventory()
+
+    @property
+    def gold(self):
+        return self._gold
+
+    @gold.setter
+    def gold(self, value):
+        self._gold = max(0, value)
 
     @property
     def energy(self):
@@ -46,11 +62,61 @@ class Character:
         elif dy < 0: self.facing_direction = "N"
 
     def get_attribute(self, name):
+        """Calculates final attribute considering base, level, class and equipment."""
         base_value = self.base_stats.get(name, 0)
+        
+        # Add equipment bonuses
+        bonus = 0
+        for eq in self.equipment.values():
+            if eq:
+                bonus += eq.bonuses.get(name, 0)
+
         multiplier = self.character_class.multipliers.get(name, 1.0)
         gain_rate = self.character_class.gain_rates.get(name, 0.0)
         
-        return self.attributes.calculate(base_value, self.level, gain_rate, multiplier)
+        final_base = self.attributes.calculate(base_value, self.level, gain_rate, multiplier)
+        return final_base + bonus
+
+    @property
+    def defense_absolute(self):
+        # Base defense + equipment
+        bonus = 0
+        for eq in self.equipment.values():
+            if eq:
+                bonus += eq.bonuses.get('defesa_absoluta', 0)
+        return bonus
+
+    @property
+    def defense_relative(self):
+        # Base % defense + equipment
+        bonus = 0.0
+        for eq in self.equipment.values():
+            if eq:
+                bonus += eq.bonuses.get('defesa_relativa', 0.0)
+        return min(0.9, bonus) # Cap at 90%
+
+    def equip_item(self, item):
+        """Checks requirements and equips an item."""
+        # Check class
+        if item.req_class and item.req_class != self.character_class.__class__.__name__:
+            return False, f"Classe {self.character_class.__class__.__name__} não pode usar este item."
+        
+        # Check stats
+        for stat, req in item.req_stats.items():
+            if self.get_attribute(stat) < req:
+                return False, f"{stat.capitalize()} insuficiente (Requer {req})."
+
+        # Equip
+        old_item = self.equipment.get(item.slot)
+        self.equipment[item.slot] = item
+        return True, old_item
+
+    def unequip_item(self, slot):
+        if slot in self.equipment:
+            item = self.equipment[slot]
+            self.equipment[slot] = None
+            return item
+        return None
 
     @property
     def hp(self):
