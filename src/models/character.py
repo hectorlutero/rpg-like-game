@@ -1,4 +1,4 @@
-from src.models.attributes import AttributePackage
+from src.models.attributes import StatsCalculator
 from src.models.world import Position
 from src.models.persistence import Inventory
 
@@ -10,7 +10,6 @@ class Character:
         self.level = level
         self.xp = 0
         self.xp_to_next_level = 100
-        self.attributes = AttributePackage()
         
         # Equipment Slots
         self.equipment = {
@@ -64,68 +63,17 @@ class Character:
 
     def get_attribute(self, name):
         """Calculates final attribute considering base, level, class and equipment."""
-        base_value = self.base_stats.get(name, 0)
-        
-        multiplier = self.character_class.multipliers.get(name, 1.0)
-        gain_rate = self.character_class.gain_rates.get(name, 0.0)
-        
-        final_base = self.attributes.calculate(base_value, self.level, gain_rate, multiplier)
-        
-        total_flat_bonus = 0
-        total_percent_bonus = 0.0
-        
-        for eq in self.equipment.values():
-            if not eq: continue
-            
-            # Calculate Proficiency Multiplier
-            prof_mult = 1.0
-            tags = getattr(eq, 'tags', [])
-            for tag in tags:
-                if tag in self.character_class.proficiencies:
-                    prof_mult = max(prof_mult, self.character_class.proficiencies[tag])
-            
-            # Add Flat Bonuses
-            flat = eq.bonuses.get(name, 0)
-            total_flat_bonus += int(flat * prof_mult)
-            
-            # Add Percentage Bonuses
-            perc = getattr(eq, 'percent_bonuses', {}).get(name, 0.0)
-            total_percent_bonus += (perc * prof_mult)
-
-        return int((final_base + total_flat_bonus) * (1.0 + total_percent_bonus))
+        return StatsCalculator.calculate_final(
+            name, self.base_stats, self.character_class, self.level, self.equipment
+        )
 
     @property
     def defense_absolute(self):
-        # Base defense + equipment (respects proficiency)
-        total = 0
-        for eq in self.equipment.values():
-            if not eq: continue
-            
-            prof_mult = 1.0
-            for tag in getattr(eq, 'tags', []):
-                if tag in self.character_class.proficiencies:
-                    prof_mult = max(prof_mult, self.character_class.proficiencies[tag])
-            
-            total += int(eq.bonuses.get('defesa_absoluta', 0) * prof_mult)
-        return total
+        return StatsCalculator.calculate_defense(self.equipment, self.character_class, mode='absolute')
 
     @property
     def defense_relative(self):
-        # Base % defense + equipment (respects proficiency)
-        total = 0.0
-        for eq in self.equipment.values():
-            if not eq: continue
-            
-            prof_mult = 1.0
-            for tag in getattr(eq, 'tags', []):
-                if tag in self.character_class.proficiencies:
-                    prof_mult = max(prof_mult, self.character_class.proficiencies[tag])
-            
-            # Note: defense_relative can come from bonuses OR percent_bonuses 
-            # (In items.py it was using .bonuses for relative defense previously)
-            val = eq.bonuses.get('defesa_relativa', 0.0)
-            total += (val * prof_mult)
-        return min(0.9, total) # Cap at 90%
+        return StatsCalculator.calculate_defense(self.equipment, self.character_class, mode='relative')
 
     def equip_item(self, item):
         """Checks requirements and equips an item."""
