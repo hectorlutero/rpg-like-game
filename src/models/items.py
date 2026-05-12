@@ -14,6 +14,19 @@ class Equipment(Item):
         self.req_class = req_class # "Warrior"
 
 # Equipment Registry
+class Consumable(Item):
+    def __init__(self, name, description, effect, price=0):
+        super().__init__(name, description, price, category="Consumable")
+        self.effect = effect # {'hp': 50, 'mana': 20}
+
+# Registries
+CONSUMABLE_DATA = {
+    "Poção de Vida": Consumable("Poção de Vida", "Restaura 50 de HP.", {'hp': 50}, price=20),
+    "Poção de Mana": Consumable("Poção de Mana", "Restaura 30 de Mana.", {'mana': 30}, price=30),
+    "Antídoto": Consumable("Antídoto", "Cura o efeito de Veneno.", {'cure': 'poison'}, price=40),
+    "Remédio Estimulante": Consumable("Remédio Estimulante", "Cura o efeito de Paralisia.", {'cure': 'paralysis'}, price=50)
+}
+
 EQUIPMENT_DATA = {
     "Espada de Ferro": Equipment(
         "Espada de Ferro", "Uma espada robusta de ferro.", 

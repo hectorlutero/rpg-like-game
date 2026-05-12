@@ -109,7 +109,7 @@ def main():
 
     # NOVO: Mercador
     from src.ui.shop_scene import Shopkeeper
-    merchant = Shopkeeper("Mercador Errante", ["Espada de Ferro", "Armadura de Couro", "Anel de Inteligência"])
+    merchant = Shopkeeper("Mercador Errante", ["Espada de Ferro", "Armadura de Couro", "Anel de Inteligência", "Poção de Vida", "Antídoto"])
     # Coloca o mercador no tile (8, 10)
     world.add_interactable(8, 10, merchant)
 
@@ -140,6 +140,21 @@ def main():
     if "status_test_chest" in context.opened_chests:
         status_chest.is_open = True
     world.add_interactable(550 // 32, 100 // 32, status_chest)
+
+    # NOVO: Baú de Poções para Teste
+    def setup_potion_chest(context):
+        from src.models.dialogue import DialogueManager
+        if "potion_test_chest" not in context.opened_chests:
+            context.player.inventory.add_item("Poção de Vida")
+            context.player.inventory.add_item("Poção de Mana")
+            context.player.inventory.add_item("Antídoto")
+            context.opened_chests.add("potion_test_chest")
+            return "Você encontrou Poções de Vida, Mana e Antídoto!"
+        return "O baú já foi saqueado."
+    
+    potion_chest = Chest(item=None, gold=0, chest_id="potion_test_chest")
+    potion_chest.on_interact = setup_potion_chest
+    world.add_interactable(600 // 32, 100 // 32, potion_chest)
     
     # Inicia com a cena de exploração
     manager.push(ExplorationScene(manager, npc, enemy_pos))

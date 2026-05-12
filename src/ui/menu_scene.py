@@ -18,6 +18,9 @@ class MenuScene(Scene):
         self.inventory_selector = SelectionManager()
         self._refresh_inventory_list()
         
+        # Feedback visual
+        self.message = ""
+        
         # Estado: TABS ou INVENTORY_NAV
         self.focus = "TABS"
 
@@ -45,20 +48,15 @@ class MenuScene(Scene):
                 elif event.key == pygame.K_BACKSPACE or event.key == pygame.K_LEFT:
                     self.focus = "TABS"
                 elif event.key in [pygame.K_SPACE, pygame.K_RETURN]:
-                    # Tenta equipar o item
+                    # Tenta usar ou equipar o item
                     item_name = self.inventory_selector.current_item
-                    if item_name in EQUIPMENT_DATA:
-                        item = EQUIPMENT_DATA[item_name]
-                        success, result = self.player.equip_item(item)
-                        if success:
-                            # Se equipou, removemos do inventário e talvez devolvemos o antigo
-                            self.player.inventory.remove_item(item_name)
-                            if result: # old_item
-                                self.player.inventory.add_item(result.name)
-                            self._refresh_inventory_list()
-                            print(f"Equipou {item_name}")
-                        else:
-                            print(f"Falha ao equipar: {result}")
+                    success, result_msg = self.player.use_item(item_name)
+                    self.message = result_msg
+                    if success:
+                        self._refresh_inventory_list()
+                        # Se o inventário ficou vazio, volta o foco para abas
+                        if not self.player.inventory.items:
+                            self.focus = "TABS"
 
     def update(self, dt):
         pass
@@ -86,6 +84,10 @@ class MenuScene(Scene):
             self._draw_status_tab(screen)
         else:
             self._draw_inventory_tab(screen)
+
+        # Mensagem de Feedback
+        if self.message:
+            self._draw_text(screen, self.message, 400, 500, size=20, color=(0, 255, 0))
 
         # Instruções
         instr = "SETAS: Navegar | ESPAÇO: Selecionar | ESC: Sair"
@@ -132,16 +134,39 @@ class MenuScene(Scene):
             self._draw_text(screen, "Sua mochila está vazia.", 400, 300, size=24, color=(150, 150, 150))
             return
 
+        # Divisão: Lista (Esquerda) | Info (Direita)
         y_item = 190
         for i, item_name in enumerate(self.player.inventory.items):
             color = (255, 255, 0) if i == self.inventory_selector.index and self.focus == "INVENTORY_NAV" else (255, 255, 255)
             prefix = "> " if i == self.inventory_selector.index and self.focus == "INVENTORY_NAV" else "  "
-            
-            # Info extra do item se selecionado
-            if i == self.inventory_selector.index and self.focus == "INVENTORY_NAV":
-                if item_name in EQUIPMENT_DATA:
-                    eq = EQUIPMENT_DATA[item_name]
-                    self._draw_text(screen, f"Tipo: {eq.slot.capitalize()} | Bônus: {eq.bonuses}", 400, 500, size=18, color=(0, 255, 0))
-
             self._draw_text(screen, f"{prefix}{item_name}", 100, y_item, size=20, color=color, align="left")
             y_item += 35
+
+        # Painel de Informações (Direita)
+        selected_name = self.inventory_selector.current_item
+        if selected_name:
+            from src.models.items import CONSUMABLE_DATA, EQUIPMENT_DATA
+            item = CONSUMABLE_DATA.get(selected_name) or EQUIPMENT_DATA.get(selected_name)
+            if item:
+                panel_x = 420
+                pygame.draw.rect(screen, (30, 30, 50), (panel_x, 150, 320, 300))
+                pygame.draw.rect(screen, (100, 100, 120), (panel_x, 150, 320, 300), 1)
+                
+                self._draw_text(screen, item.name.upper(), panel_x + 160, 180, size=20, color=(255, 215, 0))
+                self._draw_text(screen, f"Tipo: {item.category}", panel_x + 10, 210, size=16, align="left", color=(180, 180, 180))
+                
+                # Descrição (Quebra de linha simples se necessário)
+                desc_lines = item.description.split('\n')
+                for j, line in enumerate(desc_lines):
+                    self._draw_text(screen, line, panel_x + 10, 240 + j*20, size=16, align="left")
+                
+                # Stats / Efeitos
+                if hasattr(item, 'bonuses') and item.bonuses:
+                    self._draw_text(screen, "Bônus:", panel_x + 10, 290, size=16, align="left", color=(0, 255, 255))
+                    for k, (stat, val) in enumerate(item.bonuses.items()):
+                        self._draw_text(screen, f"+{val} {stat.capitalize()}", panel_x + 20, 310 + k*20, size=14, align="left")
+                
+                if hasattr(item, 'effect') and item.effect:
+                    self._draw_text(screen, "Efeitos:", panel_x + 10, 290, size=16, align="left", color=(0, 255, 0))
+                    for k, (eff, val) in enumerate(item.effect.items()):
+                        self._draw_text(screen, f"{val} {eff.upper()}", panel_x + 20, 310 + k*20, size=14, align="left")

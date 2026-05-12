@@ -112,6 +112,39 @@ class Character:
         self.equipment[item.slot] = item
         return True, old_item
 
+    def use_item(self, item_name):
+        """Uses or equips an item from the inventory."""
+        from src.models.items import CONSUMABLE_DATA, EQUIPMENT_DATA
+        
+        # Check if it's a consumable
+        if item_name in CONSUMABLE_DATA:
+            item = CONSUMABLE_DATA[item_name]
+            # Apply Effects
+            for effect, value in item.effect.items():
+                if effect == 'hp':
+                    self.hp += value
+                elif effect == 'mana':
+                    self.mana += value
+                elif effect == 'cure':
+                    if value in self.status_effects:
+                        del self.status_effects[value]
+            
+            self.inventory.remove_item(item_name)
+            return True, f"Usou {item_name}!"
+
+        # Check if it's equipment
+        if item_name in EQUIPMENT_DATA:
+            item = EQUIPMENT_DATA[item_name]
+            success, result = self.equip_item(item)
+            if success:
+                self.inventory.remove_item(item_name)
+                if result: # old_item
+                    self.inventory.add_item(result.name)
+                return True, f"Equipou {item_name}!"
+            return False, result
+
+        return False, "Item não encontrado."
+
     def unequip_item(self, slot):
         if slot in self.equipment:
             item = self.equipment[slot]
