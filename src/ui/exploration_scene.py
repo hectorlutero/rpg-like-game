@@ -134,9 +134,11 @@ class ExplorationScene(Scene):
             elif isinstance(obj, TrainingObject):
                 pygame.draw.rect(screen, (150, 100, 50), (x_pos + 4, y_pos + 4, 24, 24))
             elif isinstance(obj, Chest):
-                color = (255, 200, 0) if not obj.is_open else (80, 40, 0)
+                # Sincroniza estado com o contexto antes de desenhar
+                is_open = obj.check_open(self.context)
+                color = (255, 200, 0) if not is_open else (80, 40, 0)
                 pygame.draw.rect(screen, color, (x_pos + 6, y_pos + 6, 20, 20))
-                if not obj.is_open:
+                if not is_open:
                     pygame.draw.rect(screen, (0, 0, 0), (x_pos + 6, y_pos + 14, 20, 2), 1)
             elif isinstance(obj, Shopkeeper):
                 pygame.draw.rect(screen, (180, 180, 50), (x_pos + 4, y_pos + 4, 24, 24))

@@ -20,7 +20,7 @@ class TestInteractablesLogic(unittest.TestCase):
 
     def test_chest_interaction_gold_and_item(self):
         item = Equipment("Test Item", "Desc", slot="accessory")
-        chest = Chest(item=item, gold=50, chest_id="test_id")
+        chest = Chest(items=[item], gold=50, chest_id="test_id")
         
         # Primeira interação
         msg = chest.on_interact(self.context)

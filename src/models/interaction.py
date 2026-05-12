@@ -67,31 +67,47 @@ class TrainingObject(Interactable):
         return f"Seu treino de {self.name} foi produtivo! Sua {attr_display} aumentou."
 
 class Chest(Interactable):
-    def __init__(self, item=None, gold=0, chest_id=None):
-        self.item = item # Equipment or Item object
+    def __init__(self, items=None, gold=0, chest_id=None, custom_msg=None):
+        self.items = items or [] # List of Item names or objects
         self.gold = gold
         self.chest_id = chest_id # Essential for persistence
-        self.is_open = False
+        self.custom_msg = custom_msg
+        self._is_open = False
+
+    @property
+    def is_open(self):
+        return self._is_open
+
+    def check_open(self, context):
+        """Checks if the chest is open, syncing with context if needed."""
+        if self._is_open:
+            return True
+        if context and self.chest_id in context.opened_chests:
+            self._is_open = True
+            return True
+        return False
 
     def on_interact(self, context):
-        if self.is_open:
+        if self.check_open(context):
             return "O baú está vazio."
         
         player = context.player
-        self.is_open = True
+        self._is_open = True
         
         # Track in context for persistence
         if self.chest_id:
             context.opened_chests.add(self.chest_id)
 
-        msg = "Você abriu o baú!"
+        msg = self.custom_msg or "Você abriu o baú!"
         if self.gold > 0:
             player.gold += self.gold
             msg += f"\nGanhou {self.gold} G!"
         
-        if self.item:
-            player.inventory.add_item(self.item.name)
-            msg += f"\nEncontrou {self.item.name}!"
+        for item in self.items:
+            # item can be a string (name) or an object with a .name attribute
+            item_name = item if isinstance(item, str) else item.name
+            player.inventory.add_item(item_name)
+            msg += f"\nEncontrou {item_name}!"
             
         return msg
 

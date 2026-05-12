@@ -23,8 +23,8 @@ class TestWorldPersistence(unittest.TestCase):
     def test_chest_state_persistence(self):
         # 1. Cria um baú e abre ele
         chest = Chest(chest_id="persistent_chest_1")
+        # No novo sistema, basta adicionar ao contexto e o baú se auto-sincroniza
         self.ctx.opened_chests.add("persistent_chest_1")
-        chest.is_open = True
         
         # 2. Salva o contexto
         self.manager.save_game(self.ctx)
@@ -33,16 +33,15 @@ class TestWorldPersistence(unittest.TestCase):
         loaded_data = self.manager.load_game()
         self.assertIn("persistent_chest_1", loaded_data['opened_chests'])
         
-        # 4. Verifica se a lógica de reconstrução (que está no main.py) funciona
+        # 4. Verifica se a lógica de reconstrução funciona
         new_ctx = GameContext(self.player, self.world)
         new_ctx.opened_chests = set(loaded_data.get('opened_chests', []))
         
-        # O baú no mapa deve responder ao estado carregado
-        # (Simulando o que o main.py faz ao criar o mapa)
+        # O baú no mapa deve responder ao estado carregado via check_open
         test_chest = Chest(chest_id="persistent_chest_1")
-        if test_chest.chest_id in new_ctx.opened_chests:
-            test_chest.is_open = True
+        is_open = test_chest.check_open(new_ctx)
             
+        self.assertTrue(is_open)
         self.assertTrue(test_chest.is_open)
 
 if __name__ == "__main__":

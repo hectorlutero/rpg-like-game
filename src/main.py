@@ -130,30 +130,20 @@ def main():
     world.add_interactable(300 // 32, 100 // 32, dummy)
 
     # NOVO: Baú de Tesouro
-    chest = Chest(item=EQUIPMENT_DATA["Escudo de Madeira"], gold=100, chest_id="spawn_chest_1")
-    if "spawn_chest_1" in context.opened_chests:
-        chest.is_open = True
+    chest = Chest(items=[EQUIPMENT_DATA["Escudo de Madeira"]], gold=100, chest_id="spawn_chest_1")
     world.add_interactable(500 // 32, 100 // 32, chest)
 
     # Baú de Teste de Status
-    status_chest = Chest(item=EQUIPMENT_DATA["Anel de Resistência"], gold=0, chest_id="status_test_chest")
-    if "status_test_chest" in context.opened_chests:
-        status_chest.is_open = True
+    status_chest = Chest(items=[EQUIPMENT_DATA["Anel de Resistência"]], gold=0, chest_id="status_test_chest")
     world.add_interactable(550 // 32, 100 // 32, status_chest)
 
     # NOVO: Baú de Poções para Teste
-    def setup_potion_chest(context):
-        from src.models.dialogue import DialogueManager
-        if "potion_test_chest" not in context.opened_chests:
-            context.player.inventory.add_item("Poção de Vida")
-            context.player.inventory.add_item("Poção de Mana")
-            context.player.inventory.add_item("Antídoto")
-            context.opened_chests.add("potion_test_chest")
-            return "Você encontrou Poções de Vida, Mana e Antídoto!"
-        return "O baú já foi saqueado."
-    
-    potion_chest = Chest(item=None, gold=0, chest_id="potion_test_chest")
-    potion_chest.on_interact = setup_potion_chest
+    potion_chest = Chest(
+        items=["Poção de Vida", "Poção de Mana", "Antídoto"], 
+        gold=0, 
+        chest_id="potion_test_chest",
+        custom_msg="Você encontrou um suprimento de poções!"
+    )
     world.add_interactable(600 // 32, 100 // 32, potion_chest)
     
     # Inicia com a cena de exploração
