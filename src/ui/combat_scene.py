@@ -128,6 +128,14 @@ class CombatScene(Scene):
                 msg += f" e {self.combat_manager.gold_reward} G"
             self.combat_manager.battle_log.append(msg)
             
+            # Gera e adiciona loot
+            loot = self.combat_manager.generate_loot()
+            if loot:
+                loot_msg = "Itens obtidos: " + ", ".join(loot)
+                self.combat_manager.battle_log.append(loot_msg)
+                for item_name in loot:
+                    self.context.player.inventory.add_item(item_name)
+            
             for hero in self.context.party:
                 hero.gain_xp(self.combat_manager.xp_reward)
                 hero.gold += self.combat_manager.gold_reward

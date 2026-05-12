@@ -4,13 +4,14 @@ from src.models.interaction import Interactable
 from src.models.status import StatusManager
 
 class EnemyInteractable(Interactable):
-    def __init__(self, name, character_class, level, world_pos, gold_yield=50, xp_yield=100):
+    def __init__(self, name, character_class, level, world_pos, gold_yield=50, xp_yield=100, loot_table=None):
         self.name = name
         self.character_class = character_class
         self.level = level
         self.world_pos = world_pos 
         self.gold_yield = gold_yield
         self.xp_yield = xp_yield
+        self.loot_table = loot_table or {}
 
     def on_interact(self, context):
         from src.ui.combat_scene import CombatScene
@@ -18,7 +19,7 @@ class EnemyInteractable(Interactable):
         enemy = Character(self.name, self.character_class, level=self.level)
         enemy.hp = 30
         enemy.weakness = "Ice" 
-        cm = CombatManager(context.party, [enemy], gold_reward=self.gold_yield, xp_reward=self.xp_yield)
+        cm = CombatManager(context.party, [enemy], gold_reward=self.gold_yield, xp_reward=self.xp_yield, loot_table=self.loot_table)
         return CombatScene(context.scene_manager, cm, self.world_pos)
 
 class DamageCalculator:
@@ -59,11 +60,12 @@ class DamageCalculator:
         return max(0, min(100, int(chance)))
 
 class CombatManager:
-    def __init__(self, party, enemies, gold_reward=0, xp_reward=0):
+    def __init__(self, party, enemies, gold_reward=0, xp_reward=0, loot_table=None):
         self.party = party  # List of Character objects
         self.enemies = enemies  # List of Character objects
         self.gold_reward = gold_reward
         self.xp_reward = xp_reward
+        self.loot_table = loot_table or {} # {'ItemName': 0.5} (50% chance)
         self.all_entities = party + enemies
         
         # Initialize ATB meters (0 to 100)
@@ -71,6 +73,14 @@ class CombatManager:
         self.active_entity = None
         self.is_waiting_for_input = False
         self.battle_log = []
+
+    def generate_loot(self):
+        """Generates a list of items based on the loot table."""
+        loot = []
+        for item_name, chance in self.loot_table.items():
+            if random.random() < chance:
+                loot.append(item_name)
+        return loot
 
     def update(self, dt):
         """Update ATB meters. Returns the entity that reached 100 first, if any."""
