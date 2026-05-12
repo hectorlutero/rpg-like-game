@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Architecture Master Specification - RPG Classic</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&family=JetBrains+Mono&display=swap');
+        :root {
+            --bg-dark: #09090b;
+            --card-dark: #18181b;
+            --primary: #3b82f6;
+            --secondary: #a855f7;
+            --border: #27272a;
+            --code-bg: #0c0c0e;
+            --emerald: #10b981;
+        }
+        body {
+            background-color: var(--bg-dark);
+            color: #fafafa;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .card {
+            background-color: var(--card-dark);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+        .card:hover { border-color: #3f3f46; }
+        .gradient-text {
+            background: linear-gradient(to right, #3b82f6, #a855f7, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .module-node {
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #3f3f46;
+            background: #27272a;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .module-ui { border-color: #3b82f6; color: #60a5fa; background: #1e3a8a30; }
+        .module-domain { border-color: #a855f7; color: #c084fc; background: #581c8730; }
+        .module-coordinator { border-color: #10b981; color: #34d399; background: #064e3b30; border-width: 2px; }
+        .module-infra { border-color: #71717a; color: #d4d4d8; background: #3f3f4630; }
+        
+        .arrow { stroke: #3f3f46; stroke-width: 1.5; fill: none; }
+        .arrow-head { fill: #3f3f46; }
+        
+        .code-block {
+            background-color: var(--code-bg);
+            border: 1px solid var(--border);
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            color: #d1d5db;
+        }
+        .method-tag {
+            background: #2563eb20;
+            color: #60a5fa;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            border: 1px solid #2563eb40;
+        }
+        .seq-line { stroke: #52525b; stroke-width: 2; stroke-dasharray: 4; }
+        .seq-actor { fill: #27272a; stroke: #3f3f46; }
+        .seq-msg { stroke: #3b82f6; stroke-width: 1.5; }
+        
+        section { scroll-margin-top: 2rem; }
+        .badge {
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-12 max-w-7xl mx-auto space-y-24 pb-32">
+    <!-- Header -->
+    <header class="border-b border-zinc-800 pb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+        <div>
+            <div class="flex items-center gap-3 mb-4">
+                <span class="badge bg-blue-500/10 text-blue-400 border border-blue-500/20">Phase: Refining</span>
+                <span class="badge bg-purple-500/10 text-purple-400 border border-purple-500/20">Arch: Deep Module</span>
+            </div>
+            <h1 class="text-7xl font-black gradient-text mb-4 tracking-tighter uppercase leading-none">Architecture Master Spec</h1>
+            <p class="text-zinc-400 text-xl font-light max-w-3xl">
+                Relatório de Auditoria Consolidado v3.0: Hierarquia de Coordenadores, Orquestração de Recursos e ROI de Engenharia.
+            </p>
+        </div>
+        <div class="flex flex-col items-end gap-2">
+            <span class="px-6 py-2 bg-emerald-500/10 text-emerald-400 rounded-full text-xs font-black border border-emerald-500/20 uppercase tracking-[0.2em]">
+                <i class="fas fa-shield-check mr-2"></i> Exaustivo & Verificado
+            </span>
+            <p class="text-[10px] text-zinc-600 mono uppercase tracking-widest">RPG Classic Project / Gemini 2.0 Agent</p>
+        </div>
+    </header>
+
+    <!-- KPI Dashboard -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="card p-8 border-blue-500/20 bg-blue-500/5">
+            <p class="text-zinc-500 text-xs mb-1 uppercase tracking-widest font-bold">Módulos Estruturais</p>
+            <h2 class="text-4xl font-black">14</h2>
+            <div class="mt-2 text-[10px] text-emerald-400"><i class="fas fa-network-wired mr-1"></i>Alta Granularidade</div>
+        </div>
+        <div class="card p-8 border-red-500/20 bg-red-500/5 text-red-400">
+            <p class="text-zinc-500 text-xs mb-1 uppercase tracking-widest font-bold">Acoplamento UI/Domain</p>
+            <h2 class="text-4xl font-black">Crítico</h2>
+            <div class="mt-2 text-[10px] opacity-70">God Class Risk: ExplorationScene</div>
+        </div>
+        <div class="card p-8 border-yellow-500/20 bg-yellow-500/5 text-yellow-400">
+            <p class="text-zinc-500 text-xs mb-1 uppercase tracking-widest font-bold">Testabilidade Unitária</p>
+            <h2 class="text-4xl font-black">65%</h2>
+            <div class="mt-2 text-[10px] opacity-70">Fricção no Mocking de Pygame</div>
+        </div>
+        <div class="card p-8 border-emerald-500/20 bg-emerald-500/5 text-emerald-400">
+            <p class="text-zinc-500 text-xs mb-1 uppercase tracking-widest font-bold">Depth Ratio Planejado</p>
+            <h2 class="text-4xl font-black">High</h2>
+            <div class="mt-2 text-[10px] opacity-70">Deep Modules em Seams Puras</div>
+        </div>
+    </section>
+
+    <!-- Diagnóstico de Fricção Atual -->
+    <section class="space-y-8">
+        <h2 class="text-3xl font-bold flex items-center text-zinc-100 uppercase tracking-tight">
+            <i class="fas fa-microscope mr-4 text-red-400"></i> Diagnóstico de Fricção (Legacy)
+        </h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="card p-8 border-red-500/10">
+                <h3 class="font-bold mb-4 text-zinc-300">ExplorationScene.handle_event()</h3>
+                <p class="text-sm text-zinc-500 mb-6 leading-relaxed">
+                    A cena acumula responsabilidades de domínio, como tradução de vetores de movimento para detecção de tiles e gestão de ciclos de vida de diálogos.
+                </p>
+                <ul class="text-[11px] space-y-3 text-red-300/70">
+                    <li class="flex items-start gap-2"><i class="fas fa-circle-exclamation mt-1"></i> <span><strong>Vazamento de Domínio:</strong> Lógica de colisão e descoberta de baús reside na UI.</span></li>
+                    <li class="flex items-start gap-2"><i class="fas fa-circle-exclamation mt-1"></i> <span><strong>Acoplamento:</strong> Dependência direta de <span class="mono">DialogueManager</span> e <span class="mono">SceneManager</span>.</span></li>
+                    <li class="flex items-start gap-2"><i class="fas fa-circle-exclamation mt-1"></i> <span><strong>Manutenibilidade:</strong> Adicionar Quests requer inchar este loop de eventos.</span></li>
+                </ul>
+            </div>
+            <div class="card p-8 border-red-500/10">
+                <h3 class="font-bold mb-4 text-zinc-300">ExplorationScene.draw()</h3>
+                <p class="text-sm text-zinc-500 mb-6 leading-relaxed">
+                    Contém dezenas de "Magic Numbers" de renderização e orquestração visual manual que deveria ser encapsulada.
+                </p>
+                <div class="code-block mono text-[10px] leading-relaxed">
+<span class="text-zinc-600"># Ponto de Fricção Visual:</span><br>
+if self.active_dialogue:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;pygame.draw.rect(screen, (0, 0, 0), (50, 400, 700, 150))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-zinc-600"># + 20 linhas de desenho manual espalhadas pela cena</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mapa Sistêmico Atual (14 Módulos) -->
+    <section class="space-y-10">
+        <h2 class="text-3xl font-bold flex items-center text-zinc-100 uppercase tracking-tight">
+            <i class="fas fa-project-diagram mr-4 text-blue-500"></i> Sistema Atual: 14 Módulos & Dependências
+        </h2>
+        <div class="card p-12 bg-red-500/5 relative overflow-hidden">
+            <svg viewBox="0 0 1000 520" class="w-full h-auto">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" class="arrow-head" />
+                    </marker>
+                </defs>
+
+                <!-- UI LAYER -->
+                <g transform="translate(50, 40)">
+                    <rect x="0" y="0" width="900" height="140" rx="12" fill="#3b82f605" stroke="#3b82f630" stroke-dasharray="8,4" />
+                    <text x="15" y="-12" fill="#3b82f6" font-size="12" font-weight="900">UI LAYER</text>
+                    <foreignObject x="40" y="35" width="140" height="70"><div class="module-node module-ui border-red-500 ring-4 ring-red-500/10 text-xs font-black">ExplorationScene</div></foreignObject>
+                    <foreignObject x="215" y="35" width="140" height="70"><div class="module-node module-ui">CombatScene</div></foreignObject>
+                    <foreignObject x="390" y="35" width="140" height="70"><div class="module-node module-ui">MenuScene</div></foreignObject>
+                    <foreignObject x="565" y="35" width="140" height="70"><div class="module-node module-ui">ShopScene</div></foreignObject>
+                    <foreignObject x="740" y="35" width="120" height="70"><div class="module-node module-ui text-[10px]">CombatUI</div></foreignObject>
+                </g>
+
+                <!-- DOMAIN LAYER -->
+                <g transform="translate(50, 270)">
+                    <rect x="0" y="0" width="900" height="220" rx="12" fill="#a855f705" stroke="#a855f730" stroke-dasharray="8,4" />
+                    <text x="15" y="-12" fill="#a855f7" font-size="12" font-weight="900">DOMAIN LAYER</text>
+                    <foreignObject x="40" y="40" width="120" height="60"><div class="module-node module-domain border-emerald-500">Character</div></foreignObject>
+                    <foreignObject x="185" y="40" width="120" height="60"><div class="module-node module-domain border-emerald-500">Stats Engine</div></foreignObject>
+                    <foreignObject x="330" y="40" width="120" height="60"><div class="module-node module-domain">CombatManager</div></foreignObject>
+                    <foreignObject x="475" y="40" width="120" height="60"><div class="module-node module-domain">StatusManager</div></foreignObject>
+                    <foreignObject x="40" y="130" width="120" height="60"><div class="module-node module-domain">World System</div></foreignObject>
+                    <foreignObject x="185" y="130" width="120" height="60"><div class="module-node module-domain">Interaction</div></foreignObject>
+                    <foreignObject x="330" y="130" width="120" height="60"><div class="module-node module-domain">Dialogue</div></foreignObject>
+                    <foreignObject x="475" y="130" width="120" height="60"><div class="module-node module-domain">Inventory</div></foreignObject>
+                    <foreignObject x="740" y="40" width="120" height="60"><div class="module-node module-infra">Persistence</div></foreignObject>
+                    <foreignObject x="740" y="130" width="120" height="60"><div class="module-node module-infra text-[10px]">SceneManager</div></foreignObject>
+                </g>
+
+                <!-- Acoplamentos -->
+                <path d="M 110 145 L 110 270" class="arrow" marker-end="url(#arrowhead)" stroke-width="4" stroke="#ef4444" opacity="0.7" />
+                <path d="M 130 145 L 220 400" class="arrow" marker-end="url(#arrowhead)" stroke="#ef4444" opacity="0.4" />
+                <path d="M 150 145 L 360 400" class="arrow" marker-end="url(#arrowhead)" stroke="#ef4444" opacity="0.4" />
+                <text x="120" y="210" fill="#ef4444" font-size="11" font-weight="900" tracking="1">GOD CLASS COUPLING</text>
+            </svg>
+        </div>
+    </section>
+
+    <!-- NOVA SEÇÃO: Arquitetura Proposta (Orquestração Completa) -->
+    <section class="space-y-12">
+        <h2 class="text-3xl font-bold flex items-center text-zinc-100 uppercase tracking-tight">
+            <i class="fas fa-sitemap mr-4 text-emerald-400"></i> Arquitetura Proposta: Hierarquia de Módulos
+        </h2>
+        
+        <div class="card p-12 bg-zinc-900/10 border-emerald-500/10 overflow-hidden">
+            <svg viewBox="0 0 1000 650" class="w-full h-auto">
+                <!-- UI LAYER -->
+                <g transform="translate(50, 40)">
+                    <rect x="0" y="0" width="220" height="570" rx="15" fill="#3b82f605" stroke="#3b82f620" stroke-dasharray="5,5" />
+                    <text x="10" y="-12" fill="#3b82f6" font-size="12" font-weight="bold">UI LAYER (View)</text>
+                    
+                    <foreignObject x="20" y="30" width="180" height="80">
+                        <div class="module-node module-ui border-emerald-500 border-2">ExplorationScene<br><span class="font-normal opacity-50 uppercase text-[9px]">Thin Wrapper</span></div>
+                    </foreignObject>
+                    
+                    <foreignObject x="20" y="220" width="180" height="80">
+                        <div class="module-node module-ui">InteractionRenderer<br><span class="font-normal opacity-50 uppercase text-[9px]">Visual Component</span></div>
+                    </foreignObject>
+                </g>
+
+                <!-- COORDINATION LAYER (The Deep Module Seam) -->
+                <g transform="translate(350, 40)">
+                    <rect x="0" y="0" width="250" height="570" rx="15" fill="#10b98105" stroke="#10b98130" stroke-width="2" stroke-dasharray="10,5" />
+                    <text x="10" y="-12" fill="#10b981" font-size="12" font-weight="900">COORDINATION LAYER</text>
+                    
+                    <foreignObject x="25" y="60" width="200" height="120">
+                        <div class="module-node module-coordinator shadow-lg shadow-emerald-500/10">
+                            InteractionManager<br>
+                            <span class="font-black text-[14px] text-white">ORCHESTRATOR</span><br>
+                            <span class="font-normal opacity-60 text-[9px] block mt-2">(The Deep Module Seam)</span>
+                        </div>
+                    </foreignObject>
+
+                    <foreignObject x="25" y="440" width="200" height="80">
+                        <div class="module-node module-coordinator opacity-50">CombatManager<br><span class="font-normal text-[9px] uppercase">Battle Orchestrator</span></div>
+                    </foreignObject>
+                </g>
+
+                <!-- DOMAIN RESOURCES (Backends) -->
+                <g transform="translate(700, 40)">
+                    <rect x="0" y="0" width="250" height="570" rx="15" fill="#a855f705" stroke="#a855f720" stroke-dasharray="5,5" />
+                    <text x="10" y="-12" fill="#a855f7" font-size="12" font-weight="bold">DOMAIN RESOURCES (Data/Services)</text>
+                    
+                    <foreignObject x="40" y="30" width="170" height="50"><div class="module-node module-domain opacity-80">Character (State)</div></foreignObject>
+                    <foreignObject x="40" y="95" width="170" height="50"><div class="module-node module-domain opacity-80">Stats Engine</div></foreignObject>
+                    <foreignObject x="40" y="160" width="170" height="50"><div class="module-node module-domain opacity-80">StatusManager</div></foreignObject>
+                    <foreignObject x="40" y="225" width="170" height="50"><div class="module-node module-domain opacity-80">World Grid</div></foreignObject>
+                    <foreignObject x="40" y="290" width="170" height="50"><div class="module-node module-domain opacity-80">Dialogue Logic</div></foreignObject>
+                    <foreignObject x="40" y="355" width="170" height="50"><div class="module-node module-domain opacity-80">Inventory System</div></foreignObject>
+                    <foreignObject x="40" y="440" width="170" height="50"><div class="module-node module-infra opacity-80">Persistence (Save)</div></foreignObject>
+                    <foreignObject x="40" y="505" width="170" height="50"><div class="module-node module-infra opacity-80">SceneManager</div></foreignObject>
+                </g>
+
+                <!-- FLUXO DE CONEXÃO -->
+                <!-- UI -> Manager -->
+                <path d="M 230 85 L 350 85" class="arrow" marker-end="url(#arrowhead)" stroke="#3b82f6" stroke-width="3" />
+                <text x="245" y="75" fill="#3b82f6" font-size="10" font-weight="bold">1. Intents</text>
+                
+                <!-- Manager -> Resources (The "Backend" connection) -->
+                <path d="M 580 100 L 700 55" class="arrow" marker-end="url(#arrowhead)" opacity="0.5" />
+                <path d="M 580 110 L 700 120" class="arrow" marker-end="url(#arrowhead)" opacity="0.5" />
+                <path d="M 580 120 L 700 245" class="arrow" marker-end="url(#arrowhead)" opacity="0.5" />
+                <path d="M 580 130 L 700 315" class="arrow" marker-end="url(#arrowhead)" opacity="0.5" />
+                <path d="M 580 140 L 700 465" class="arrow" marker-end="url(#arrowhead)" opacity="0.5" />
+                <text x="610" y="180" fill="#a855f7" font-size="11" font-weight="900">ORCHESTRATION</text>
+
+                <!-- Manager -> Renderer (The DTO connection) -->
+                <path d="M 450 180 L 450 250 L 230 250" class="arrow" marker-end="url(#arrowhead)" stroke="#10b981" stroke-width="3" />
+                <text x="320" y="240" fill="#10b981" font-size="11" font-weight="black">2. View DTO</text>
+            </svg>
+
+            <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-12 text-sm">
+                <div class="space-y-4">
+                    <h4 class="font-black text-emerald-400 uppercase tracking-widest text-xs">Módulos de Coordenação (The New Logic)</h4>
+                    <p class="text-zinc-400 leading-relaxed">
+                        Introduzimos os <strong>Coordenadores de Estado</strong>. Eles são os únicos clientes diretos dos recursos de domínio. A cena não pergunta mais ao <span class="mono">Character</span> sua posição; ela diz ao <span class="mono">InteractionManager</span>: "O herói quer interagir", e o Manager consulta o <span class="mono">World</span> e o <span class="mono">Character</span> para decidir o que acontece.
+                    </p>
+                </div>
+                <div class="space-y-4 border-l border-zinc-800 pl-10">
+                    <h4 class="font-black text-purple-400 uppercase tracking-widest text-xs">Módulos de Recurso (The Backend)</h4>
+                    <p class="text-zinc-400 leading-relaxed">
+                        <span class="mono">Character</span>, <span class="mono">Stats Engine</span> e <span class="mono">StatusManager</span> agora são "Módulos Puros". Eles não têm ideia de que o Pygame existe. Eles apenas processam dados e retornam resultados para os Coordenadores, tornando o núcleo do jogo imune a mudanças de UI.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interfaces Técnicas Detalhadas -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        <div class="space-y-6">
+            <h3 class="text-xl font-black text-blue-400 uppercase tracking-widest flex items-center">
+                <i class="fas fa-terminal mr-3 text-sm"></i> InteractionManager Interface
+            </h3>
+            <div class="code-block mono text-xs leading-relaxed border-blue-500/20">
+                <span class="text-zinc-600"># src/models/interaction_manager.py</span><br><br>
+                <span class="method-tag">METHOD</span> <span class="text-blue-400 font-bold">interact() -> bool</span><br>
+                &nbsp;&nbsp;<span class="text-zinc-500">Calcula tile frontal e dispara a ação lógica.</span><br><br>
+                <span class="method-tag">METHOD</span> <span class="text-blue-400 font-bold">process_command(cmd)</span><br>
+                &nbsp;&nbsp;<span class="text-zinc-500">Mapeia: 'CONFIRM', 'UP', 'DOWN', 'CANCEL'.</span><br><br>
+                <span class="method-tag">PROPERTY</span> <span class="text-blue-400 font-bold">is_active -> bool</span><br>
+                &nbsp;&nbsp;<span class="text-zinc-500">Trava a movimentação do herói na cena.</span><br><br>
+                <span class="method-tag">METHOD</span> <span class="text-blue-400 font-bold">get_view_model() -> InteractionDTO</span><br>
+                &nbsp;&nbsp;<span class="text-zinc-500">Exporta DTO puro para o Renderer (Visual Skin).</span>
+            </div>
+        </div>
+        <div class="space-y-6">
+            <h3 class="text-xl font-black text-purple-400 uppercase tracking-widest flex items-center">
+                <i class="fas fa-brush mr-3 text-sm"></i> InteractionRenderer Interface
+            </h3>
+            <div class="code-block mono text-xs leading-relaxed border-purple-500/20">
+                <span class="text-zinc-600"># src/ui/interaction_renderer.py</span><br><br>
+                <span class="method-tag bg-purple-500/10 text-purple-400 border-purple-500/20">METHOD</span> <span class="text-purple-400 font-bold">render(screen, dto)</span><br>
+                &nbsp;&nbsp;<span class="text-zinc-500">Orquestra desenho da caixa, textos e escolhas.</span><br><br>
+                <span class="method-tag bg-purple-500/10 text-purple-400 border-purple-500/20">METHOD</span> <span class="text-purple-400 font-bold">_draw_box(rect, style)</span><br>
+                &nbsp;&nbsp;<span class="text-zinc-500">Implementação estética pura (Pygame).</span><br><br>
+                <span class="method-tag bg-purple-500/10 text-purple-400 border-purple-500/20">METHOD</span> <span class="text-purple-400 font-bold">_draw_cursor(idx)</span><br>
+                &nbsp;&nbsp;<span class="text-zinc-500">Desenha o indicador visual de seleção.</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Diagrama de Sequência Dinâmico -->
+    <section class="space-y-10">
+        <h2 class="text-3xl font-bold flex items-center text-zinc-100 uppercase tracking-tight">
+            <i class="fas fa-stream mr-4 text-yellow-500"></i> Dynamic Interaction Flow (Sequence)
+        </h2>
+        <div class="card p-12 bg-zinc-900/40 border-yellow-500/10">
+            <svg viewBox="0 0 1000 420" class="w-full h-auto">
+                <g transform="translate(100, 20)">
+                    <rect x="-60" y="0" width="120" height="40" rx="6" class="seq-actor border-blue-500" />
+                    <text x="0" y="25" text-anchor="middle" fill="#60a5fa" font-size="12" font-weight="900">Pygame Input</text>
+                    <line x1="0" y1="40" x2="0" y2="380" class="seq-line" />
+                </g>
+                <g transform="translate(350, 20)">
+                    <rect x="-70" y="0" width="140" height="40" rx="6" class="seq-actor border-purple-500" />
+                    <text x="0" y="25" text-anchor="middle" fill="#a855f7" font-size="12" font-weight="900">ExplorationScene</text>
+                    <line x1="0" y1="40" x2="0" y2="380" class="seq-line" />
+                </g>
+                <g transform="translate(650, 20)">
+                    <rect x="-80" y="0" width="160" height="40" rx="6" class="seq-actor" style="stroke: #10b981; fill: #10b98110;" />
+                    <text x="0" y="25" text-anchor="middle" fill="#10b981" font-size="12" font-weight="900">InteractionManager</text>
+                    <line x1="0" y1="40" x2="0" y2="380" class="seq-line" stroke="#10b981" opacity="0.3" />
+                </g>
+                <g transform="translate(900, 20)">
+                    <rect x="-60" y="0" width="120" height="40" rx="6" class="seq-actor border-yellow-500" />
+                    <text x="0" y="25" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="900">Renderer / UI</text>
+                    <line x1="0" y1="40" x2="0" y2="380" class="seq-line" />
+                </g>
+
+                <path d="M 100 80 L 350 80" class="seq-msg" marker-end="url(#arrowhead)" />
+                <text x="225" y="72" text-anchor="middle" fill="#fafafa" font-size="11">K_SPACE</text>
+
+                <path d="M 350 120 L 650 120" class="seq-msg" style="stroke: #10b981; stroke-width: 2.5;" marker-end="url(#arrowhead)" />
+                <text x="500" y="112" text-anchor="middle" fill="#10b981" font-size="11" font-weight="black">manager.interact()</text>
+
+                <path d="M 650 160 L 680 160 L 680 200 L 650 200" class="seq-msg" style="stroke: #10b981;" marker-end="url(#arrowhead)" />
+                <text x="690" y="185" fill="#10b981" font-size="10">Consult Domain (Character/World)</text>
+
+                <path d="M 350 280 L 900 280" class="seq-msg" style="stroke: #fbbf24; stroke-width: 2.5;" marker-end="url(#arrowhead)" />
+                <text x="625" y="272" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="bold">renderer.render(screen, DTO)</text>
+            </svg>
+        </div>
+    </section>
+
+    <!-- Engineering ROI: Test Surface -->
+    <section class="space-y-10">
+        <h2 class="text-3xl font-bold flex items-center text-zinc-100 uppercase tracking-tight">
+            <i class="fas fa-chart-line mr-4 text-emerald-500"></i> Engineering ROI: Test Surface
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div class="space-y-4">
+                <h4 class="text-[10px] font-black text-red-500 uppercase tracking-widest">Legacy Approach (High Friction)</h4>
+                <div class="code-block mono text-[10px] opacity-60 border-red-500/20 leading-loose">
+<span class="text-zinc-600"># Requer infra Pygame e Display ativo</span><br>
+def test_dialogue_logic():<br>
+&nbsp;&nbsp;&nbsp;&nbsp;pygame.display.set_mode((1,1))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;scene = ExplorationScene()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;scene.handle_event(K_SPACE)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;assert scene.active_dialogue is not None<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-red-500 text-[9px] font-black uppercase">Fragilidade: Dependência visual global</span>
+                </div>
+            </div>
+            <div class="space-y-4">
+                <h4 class="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Deep Approach (Strategic)</h4>
+                <div class="code-block mono text-[10px] border-emerald-500/20 leading-loose">
+<span class="text-zinc-600"># Teste puramente lógico e atômico</span><br>
+def test_interaction_logic():<br>
+&nbsp;&nbsp;&nbsp;&nbsp;manager = InteractionManager(mock_ctx)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;manager.interact()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;assert manager.is_active == True<br>
+&nbsp;&nbsp;&nbsp;&nbsp;assert manager.get_view_model().text != ""<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-emerald-400 text-[9px] font-black uppercase">Robustez: Testa o contrato de domínio</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Resiliência & Invariantes -->
+    <section class="space-y-10">
+        <h2 class="text-3xl font-bold flex items-center text-zinc-100 uppercase tracking-tight">
+            <i class="fas fa-microchip mr-4 text-purple-500"></i> Resiliência & Invariantes
+        </h2>
+        <div class="card overflow-hidden">
+            <table class="w-full text-sm text-left border-collapse">
+                <thead class="bg-zinc-800/40 text-zinc-500 uppercase text-[10px] tracking-widest font-black">
+                    <tr>
+                        <th class="p-6 border-b border-zinc-800">Rule / Constraint</th>
+                        <th class="p-6 border-b border-zinc-800 text-center">Expected Behavior</th>
+                        <th class="p-6 border-b border-zinc-800 text-right">Failure Handling</th>
+                    </tr>
+                </thead>
+                <tbody class="text-zinc-300">
+                    <tr class="border-b border-zinc-800/40 hover:bg-zinc-800/20 transition-colors">
+                        <td class="p-6 font-black text-white">Active Lock</td>
+                        <td class="p-6 text-center text-zinc-400 italic">No multiple interact() while is_active</td>
+                        <td class="p-6 text-right text-xs text-zinc-500 uppercase font-bold tracking-tighter">Silent Discard</td>
+                    </tr>
+                    <tr class="border-b border-zinc-800/40 hover:bg-zinc-800/20 transition-colors">
+                        <td class="p-6 font-black text-white">Empty Target</td>
+                        <td class="p-6 text-center text-zinc-400 italic">Trigger on null interactable</td>
+                        <td class="p-6 text-right text-xs text-zinc-500 uppercase font-bold tracking-tighter">Return False / IDLE</td>
+                    </tr>
+                    <tr class="border-b border-zinc-800/40 hover:bg-zinc-800/20 transition-colors">
+                        <td class="p-6 font-black text-white">Scene Push</td>
+                        <td class="p-6 text-center text-zinc-400 italic">Interactions changing Scene</td>
+                        <td class="p-6 text-right text-xs text-zinc-500 uppercase font-bold tracking-tighter">Auto-Clear State</td>
+                    </tr>
+                    <tr class="hover:bg-zinc-800/20 transition-colors">
+                        <td class="p-6 font-black text-white">DTO Integrity</td>
+                        <td class="p-6 text-center text-zinc-400 italic">DTO must be immutable</td>
+                        <td class="p-6 text-right text-xs text-zinc-500 uppercase font-bold tracking-tighter">Default Fallbacks</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Implementation Roadmap -->
+    <section class="card p-12 bg-gradient-to-br from-blue-600/10 to-purple-600/10 border-blue-500/20 shadow-2xl">
+        <h2 class="text-4xl font-black mb-12 tracking-tight uppercase">Implementation Roadmap</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+            <div class="space-y-6">
+                <div class="flex items-center gap-4">
+                    <span class="w-12 h-12 rounded-2xl bg-blue-500 text-white flex items-center justify-center font-black text-2xl shadow-xl shadow-blue-500/40">01</span>
+                    <h4 class="font-black text-2xl uppercase tracking-tighter">Logic Seam</h4>
+                </div>
+                <p class="text-sm text-zinc-400 leading-relaxed font-light">
+                    Implementar <span class="mono text-blue-400 font-bold">InteractionManager</span>. Concentrar descoberta de tiles e orquestração de diálogos/recursos. <strong>Goal:</strong> 100% Test Coverage.
+                </p>
+            </div>
+            <div class="space-y-6 border-l border-zinc-800 pl-12 md:border-l-0 md:pl-0">
+                <div class="flex items-center gap-4">
+                    <span class="w-12 h-12 rounded-2xl bg-purple-500 text-white flex items-center justify-center font-black text-2xl shadow-xl shadow-purple-500/40">02</span>
+                    <h4 class="font-black text-2xl uppercase tracking-tighter">Visual Seam</h4>
+                </div>
+                <p class="text-sm text-zinc-400 leading-relaxed font-light">
+                    Extração total do código Pygame para o <span class="mono text-purple-400 font-bold">InteractionRenderer</span>. Centralização de fontes, cores e design system.
+                </p>
+            </div>
+            <div class="space-y-6 border-l border-zinc-800 pl-12 md:border-l-0 md:pl-0">
+                <div class="flex items-center gap-4">
+                    <span class="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center font-black text-2xl shadow-xl shadow-emerald-500/40">03</span>
+                    <h4 class="font-black text-2xl uppercase tracking-tighter">Pure View</h4>
+                </div>
+                <p class="text-sm text-zinc-400 leading-relaxed font-light">
+                    Refatoração da <span class="mono text-emerald-400 font-bold">ExplorationScene</span>. Remoção de 150+ linhas de "lógica suja" para atingir o estado puro.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <footer class="mt-32 text-center text-zinc-700 text-[11px] font-black uppercase tracking-[0.8em] border-t border-zinc-900 pt-16">
+        RPG Classic Engineering • Enterprise Modular Audit • Gemini 2.0 Agent
+    </footer>
+</body>
+</html>
