@@ -60,11 +60,28 @@ class QuestManager:
         current_stage_idx = state["stage"]
         stages = quest_def.get("stages", [])
         
-        # Trigger reward script if exists for this stage
         current_stage = stages[current_stage_idx]
+        
+        # Build execution context for actions
+        action_context = {
+            "director": self.director,
+            "global_state": self.global_state,
+            "signal_bus": self.signal_bus
+        }
+        
+        # New action system
+        actions_data = current_stage.get("actions", [])
+        
+        # Backward compatibility for old JSON format
         reward_script = current_stage.get("reward_script")
-        if reward_script and self.director:
-            self.director.run_script(reward_script)
+        if reward_script:
+            actions_data.append({"type": "RUN_SCRIPT", "script": reward_script})
+
+        from src.logic.quest_actions import RunScriptAction
+        for act_data in actions_data:
+            if act_data.get("type") == "RUN_SCRIPT":
+                action = RunScriptAction(act_data.get("script"))
+                action.execute(action_context)
             
         # Advance to next stage or complete
         if current_stage_idx + 1 < len(stages):
