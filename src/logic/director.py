@@ -15,7 +15,7 @@ class MapAPI:
         return ("say", text)
 
     def give_item(self, item_name):
-        self.context.player.inventory.add_item(item_name)
+        self.context.player.receive_item(item_name, self.context.signal_bus)
         return ("give_item", item_name)
 
     def move_to(self, entity, target_pos, speed=2):
@@ -33,6 +33,13 @@ class DirectorEngine:
     def start_script(self, script_gen):
         self.active_script = script_gen
         self.advance()
+
+    def run_script(self, script_name):
+        """Runs a named script if registered (placeholder)."""
+        print(f"DirectorEngine: Running script {script_name} (Not fully implemented)")
+        # In the future, this will look up the script in a registry
+        # For now, we can use it to trigger specific hardcoded behaviors or just log.
+        pass
 
     def advance(self, signal=None):
         if not self.active_script:

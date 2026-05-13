@@ -1,7 +1,8 @@
 class GlobalState:
-    def __init__(self, flags=None, deltas=None):
+    def __init__(self, flags=None, deltas=None, quests=None):
         self.flags = flags or {}
         self.deltas = deltas or {} # {entity_id: {attr: value}}
+        self.quests = quests or {} # {quest_id: {stage: int, status: str}}
 
     def set_flag(self, key, value):
         self.flags[key] = value
@@ -20,12 +21,14 @@ class GlobalState:
     def to_dict(self):
         return {
             "flags": self.flags,
-            "deltas": self.deltas
+            "deltas": self.deltas,
+            "quests": self.quests
         }
 
     @classmethod
     def from_dict(cls, data):
         return cls(
             flags=data.get("flags", {}),
-            deltas=data.get("deltas", {})
+            deltas=data.get("deltas", {}),
+            quests=data.get("quests", {})
         )

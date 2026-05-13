@@ -7,9 +7,12 @@ class GameContext:
         self.world = world
         self.party = [player]
         self.save_manager = None # Será injetado no main
+        self.orchestrator = None # Injetado no main
         self.running = True
         self.global_state = GlobalState()
         self.director = None # Injetado no main
+        self.signal_bus = None # Injetado no main
+        self.quest_manager = None # Injetado no main
         
     @property
     def opened_chests(self):

@@ -27,7 +27,11 @@ class EnemyInteractable(Interactable):
         enemy = Character(self.name, self.character_class, level=self.level)
         enemy.hp = 30
         enemy.weakness = "Ice" 
-        cm = CombatManager(context.party, [enemy], gold_reward=self.gold_yield, xp_reward=self.xp_yield, loot_table=self.loot_table)
+        cm = CombatManager(context.party, [enemy], 
+                           gold_reward=self.gold_yield, 
+                           xp_reward=self.xp_yield, 
+                           loot_table=self.loot_table,
+                           signal_bus=context.signal_bus)
         return CombatScene(context.scene_manager, cm, self.world_pos)
 
     def draw(self, screen, context, pos):
@@ -75,12 +79,13 @@ class DamageCalculator:
         return max(0, min(100, int(chance)))
 
 class CombatManager:
-    def __init__(self, party, enemies, gold_reward=0, xp_reward=0, loot_table=None):
+    def __init__(self, party, enemies, gold_reward=0, xp_reward=0, loot_table=None, signal_bus=None):
         self.party = party  # List of Character objects
         self.enemies = enemies  # List of Character objects
         self.gold_reward = gold_reward
         self.xp_reward = xp_reward
         self.loot_table = loot_table or {} # {'ItemName': 0.5} (50% chance)
+        self.signal_bus = signal_bus
         self.all_entities = party + enemies
         
         # Initialize ATB meters (0 to 100)
@@ -177,12 +182,17 @@ class CombatManager:
             messages.append("Itens obtidos: " + ", ".join(loot))
             for item_name in loot:
                 # Note: This assumes party[0] is the main player for inventory
-                self.party[0].inventory.add_item(item_name)
+                self.party[0].receive_item(item_name, self.signal_bus)
         
         # XP and Gold
         for hero in self.party:
             hero.gain_xp(self.xp_reward)
             hero.gold += self.gold_reward
+
+        # Emit Kill signals
+        if self.signal_bus:
+            for enemy in self.enemies:
+                self.signal_bus.emit("KILL_ENEMY", target=enemy.name)
             
         return messages
 

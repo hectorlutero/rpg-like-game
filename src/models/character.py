@@ -231,6 +231,12 @@ class Character:
             self.xp -= self.xp_to_next_level
             self.level_up()
 
+    def receive_item(self, item_name, signal_bus=None):
+        """Adds an item to inventory and emits a signal."""
+        self.inventory.add_item(item_name)
+        if signal_bus:
+            signal_bus.emit("PICK_ITEM", target=item_name)
+
     def level_up(self):
         self.level += 1
         self.current_hp = self.get_attribute('vida')

@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import MagicMock
 from src.ui.menu_scene import MenuScene
 from src.ui.scenes import SceneManager, GameContext
 from src.models.character import Character
@@ -20,6 +21,9 @@ class TestMenuLogic(unittest.TestCase):
         self.player.inventory.add_item("Espada de Ferro")
         
         self.context = GameContext(self.player, World([[]]))
+        self.context.quest_manager = MagicMock()
+        self.context.quest_manager.get_active_quests.return_value = []
+        
         self.manager = MockManager(self.context)
         self.scene = MenuScene(self.manager)
 
@@ -57,6 +61,27 @@ class TestMenuLogic(unittest.TestCase):
         self.assertEqual(self.player.hp, 60)
         self.assertNotIn("Poção de Vida", self.player.inventory.items)
         self.assertEqual(self.scene.message, "Usou Poção de Vida!")
+
+    def test_quest_tab_navigation(self):
+        # Setup mock quest
+        self.context.quest_manager = MagicMock()
+        self.context.quest_manager.get_active_quests.return_value = ["q1"]
+        self.context.quest_manager.quests = {"q1": {"name": "Test Quest"}}
+        self.context.global_state.quests = {"q1": {"stage": 0, "status": "IN_PROGRESS"}}
+        
+        # Refresh quest list in scene
+        self.scene._refresh_quest_list()
+        
+        # Navigate to Quests tab
+        self.scene.tab_selector.index = 2 # MISSÕES
+        self.assertEqual(self.scene.tab_selector.current_item, "MISSÕES")
+        
+        # Focus on quests
+        import pygame
+        event = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_DOWN)
+        self.scene.handle_event(event)
+        self.assertEqual(self.scene.focus, "QUEST_NAV")
+        self.assertEqual(self.scene.quest_selector.current_item, "q1")
 
 if __name__ == '__main__':
     unittest.main()

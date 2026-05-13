@@ -11,22 +11,34 @@ class MenuScene(Scene):
         self.player = self.context.player
         
         # Gerenciamento de Abas
-        self.tabs = ["STATUS", "INVENTÁRIO"]
+        self.tabs = ["STATUS", "INVENTÁRIO", "MISSÕES"]
         self.tab_selector = SelectionManager(self.tabs)
         
         # Gerenciamento de Itens no Inventário
         self.inventory_selector = SelectionManager()
         self._refresh_inventory_list()
         
+        # Gerenciamento de Missões
+        self.quest_selector = SelectionManager()
+        self._refresh_quest_list()
+        
         # Feedback visual
         self.message = ""
         
-        # Estado: TABS ou INVENTORY_NAV
+        # Estado: TABS, INVENTORY_NAV, QUEST_NAV
         self.focus = "TABS"
 
     def _refresh_inventory_list(self):
         # Filtra apenas nomes de itens que o herói realmente tem
         self.inventory_selector.set_options(self.player.inventory.items)
+
+    def _refresh_quest_list(self):
+        # Pega as missões em progresso
+        if hasattr(self.context, "quest_manager") and self.context.quest_manager:
+            active_quests = self.context.quest_manager.get_active_quests()
+            self.quest_selector.set_options(active_quests)
+        else:
+            self.quest_selector.set_options([])
 
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
@@ -41,6 +53,8 @@ class MenuScene(Scene):
                 elif event.key in [pygame.K_DOWN, pygame.K_SPACE, pygame.K_RETURN]:
                     if self.tab_selector.current_item == "INVENTÁRIO" and self.player.inventory.items:
                         self.focus = "INVENTORY_NAV"
+                    elif self.tab_selector.current_item == "MISSÕES" and self.quest_selector.options:
+                        self.focus = "QUEST_NAV"
             
             elif self.focus == "INVENTORY_NAV":
                 if event.key == pygame.K_UP: self.inventory_selector.prev()
@@ -57,6 +71,12 @@ class MenuScene(Scene):
                         # Se o inventário ficou vazio, volta o foco para abas
                         if not self.player.inventory.items:
                             self.focus = "TABS"
+
+            elif self.focus == "QUEST_NAV":
+                if event.key == pygame.K_UP: self.quest_selector.prev()
+                elif event.key == pygame.K_DOWN: self.quest_selector.next()
+                elif event.key == pygame.K_BACKSPACE or event.key == pygame.K_LEFT:
+                    self.focus = "TABS"
 
     def update(self, dt):
         pass
@@ -82,8 +102,10 @@ class MenuScene(Scene):
 
         if self.tab_selector.current_item == "STATUS":
             self._draw_status_tab(screen)
-        else:
+        elif self.tab_selector.current_item == "INVENTÁRIO":
             self._draw_inventory_tab(screen)
+        else:
+            self._draw_quests_tab(screen)
 
         # Mensagem de Feedback
         if self.message:
@@ -193,3 +215,63 @@ class MenuScene(Scene):
                     self._draw_text(screen, "Efeitos:", panel_x + 10, 290, size=16, align="left", color=(0, 255, 0))
                     for k, (eff, val) in enumerate(item.effect.items()):
                         self._draw_text(screen, f"{val} {eff.upper()}", panel_x + 20, 310 + k*20, size=14, align="left")
+
+    def _draw_quests_tab(self, screen):
+        self._draw_text(screen, "DIÁRIO DE AVENTURAS", 70, 150, color=(0, 255, 255), align="left", size=22)
+        
+        active_quests = self.quest_selector.options
+        if not active_quests:
+            self._draw_text(screen, "Você não tem missões ativas.", 400, 300, size=24, color=(150, 150, 150))
+            return
+
+        # Divisão: Lista (Esquerda) | Info (Direita)
+        y_item = 190
+        for i, quest_id in enumerate(active_quests):
+            quest_def = self.context.quest_manager.quests.get(quest_id, {})
+            name = quest_def.get("name", quest_id)
+            
+            color = (255, 255, 0) if i == self.quest_selector.index and self.focus == "QUEST_NAV" else (255, 255, 255)
+            prefix = "> " if i == self.quest_selector.index and self.focus == "QUEST_NAV" else "  "
+            self._draw_text(screen, f"{prefix}{name}", 100, y_item, size=20, color=color, align="left")
+            y_item += 35
+
+        # Painel de Detalhes (Direita)
+        selected_id = self.quest_selector.current_item
+        if selected_id:
+            quest_def = self.context.quest_manager.quests.get(selected_id, {})
+            state = self.context.global_state.quests.get(selected_id, {})
+            
+            panel_x = 420
+            pygame.draw.rect(screen, (30, 30, 50), (panel_x, 150, 320, 300))
+            pygame.draw.rect(screen, (100, 100, 120), (panel_x, 150, 320, 300), 1)
+            
+            self._draw_text(screen, quest_def.get("name", "???").upper(), panel_x + 160, 180, size=20, color=(255, 215, 0))
+            
+            # Descrição Geral
+            desc = quest_def.get("description", "")
+            self._draw_text(screen, desc, panel_x + 10, 210, size=15, align="left", color=(180, 180, 180))
+            
+            # Objetivo Atual
+            current_stage_idx = state.get("stage", 0)
+            stages = quest_def.get("stages", [])
+            if current_stage_idx < len(stages):
+                stage_data = stages[current_stage_idx]
+                self._draw_text(screen, "Objetivo Atual:", panel_x + 10, 260, size=17, align="left", color=(0, 255, 255))
+                
+                obj_desc = stage_data.get("description", "???")
+                # Wrap text if too long (simplified)
+                words = obj_desc.split(' ')
+                lines = []
+                current_line = ""
+                for word in words:
+                    if len(current_line) + len(word) < 30:
+                        current_line += word + " "
+                    else:
+                        lines.append(current_line)
+                        current_line = word + " "
+                lines.append(current_line)
+                
+                for k, line in enumerate(lines):
+                    self._draw_text(screen, line, panel_x + 20, 290 + k*20, size=15, align="left")
+            else:
+                self._draw_text(screen, "Missão Concluída!", panel_x + 10, 260, size=17, align="left", color=(0, 255, 0))

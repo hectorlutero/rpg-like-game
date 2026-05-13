@@ -19,6 +19,13 @@ class Interactable:
         # Default fallback: um quadrado cinza
         pygame.draw.rect(screen, (150, 150, 150), (pos[0], pos[1], 32, 32))
 
+class TransitionRequest:
+    """Dados para solicitar uma troca de mapa."""
+    def __init__(self, target_map, target_tag):
+        self.target_map = target_map
+        self.target_tag = target_tag
+
+
 class MagicBook(Interactable):
     def __init__(self, skill_name, int_threshold, min_level=1, **kwargs):
         self.skill_name = skill_name
@@ -124,7 +131,7 @@ class Chest(Interactable):
         for item in self.items:
             # item can be a string (name) or an object with a .name attribute
             item_name = item if isinstance(item, str) else item.name
-            player.inventory.add_item(item_name)
+            player.receive_item(item_name, context.signal_bus)
             msg += f"\nEncontrou {item_name}!"
             
         return msg
@@ -135,6 +142,22 @@ class Chest(Interactable):
         pygame.draw.rect(screen, color, (pos[0] + 6, pos[1] + 6, 20, 20))
         if not is_open:
             pygame.draw.rect(screen, (0, 0, 0), (pos[0] + 6, pos[1] + 14, 20, 2), 1)
+
+
+class Portal(Interactable):
+    def __init__(self, target_map, target_tag, require_interaction=False, **kwargs):
+        self.target_map = target_map
+        self.target_tag = target_tag
+        self.require_interaction = require_interaction
+        self.name = kwargs.get("name", "Portal")
+
+    def on_interact(self, context):
+        """Triggers the transition request."""
+        return TransitionRequest(self.target_map, self.target_tag)
+
+    def draw(self, screen, context, pos):
+        # Draw a blue outline for debugging/visibility in development
+        pygame.draw.rect(screen, (0, 100, 255), (pos[0] + 4, pos[1] + 4, 24, 24), 2)
 
 
 class SelectionManager:
@@ -174,6 +197,7 @@ class InteractionManager:
         self.active_dialogue = None
         self.active_speaker = "Mundo"
         self.selected_index = 0
+        self.requested_transition = None
 
     @property
     def is_active(self):
@@ -194,6 +218,11 @@ class InteractionManager:
         target = world.get_interactable_at(tx, ty)
         if target:
             self.active_speaker = target.name if hasattr(target, 'name') else "Mundo"
+            
+            # Signal the interaction
+            if self.context.signal_bus:
+                self.context.signal_bus.emit("INTERACT", target=self.active_speaker)
+
             result = target.on_interact(self.context)
             
             from src.models.dialogue import DialogueManager
@@ -205,6 +234,8 @@ class InteractionManager:
                 self.active_dialogue = result
             elif isinstance(result, Scene):
                 self.scene_manager.push(result)
+            elif isinstance(result, TransitionRequest):
+                self.requested_transition = result
             
             self.selected_index = 0
 

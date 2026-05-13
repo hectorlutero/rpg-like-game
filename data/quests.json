@@ -1,0 +1,23 @@
+{
+    "tutorial_quest": {
+        "name": "Primeiros Passos",
+        "description": "Aprenda o básico explorando a vila.",
+        "stages": [
+            {
+                "id": 0,
+                "description": "Fale com o Ancião.",
+                "objectives": [
+                    {"type": "INTERACT", "target": "Ancião"}
+                ]
+            },
+            {
+                "id": 1,
+                "description": "Encontre a espada no baú.",
+                "objectives": [
+                    {"type": "PICK_ITEM", "target": "Espada de Ferro"}
+                ],
+                "reward_script": "tutorial_completed"
+            }
+        ]
+    }
+}

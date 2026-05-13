@@ -11,7 +11,9 @@ from src.ui.exploration_scene import ExplorationScene
 from src.core.registry import EntityRegistry
 from src.core.orchestrator import WorldOrchestrator
 from src.core.state import GlobalState
+from src.core.signals import SignalBus
 from src.logic.director import DirectorEngine, MapAPI
+from src.logic.quest_manager import QuestManager
 
 def main():
     pygame.init()
@@ -23,6 +25,7 @@ def main():
     registry = EntityRegistry("data/entities.json")
     save_manager = SaveManager("savegame.json")
     save_data = save_manager.load_game()
+    signal_bus = SignalBus()
     
     # --- 2. State & Player Init ---
     player = None
@@ -63,9 +66,13 @@ def main():
         from src.models.items import EQUIPMENT_DATA
         player.equip_item(EQUIPMENT_DATA["Espada de Ferro"])
 
+    quest_manager = QuestManager(global_state, signal_bus)
+    quest_manager.load_quests("data/quests.json")
+    signal_bus.subscribe_all(quest_manager.on_event)
+
     # --- 3. World & Orchestration ---
     orchestrator = WorldOrchestrator(registry, global_state)
-    world = orchestrator.load_map("data/maps/vila_inicial.json")
+    world = orchestrator.load_map("data/maps/starting_village.json")
     if not world:
         # Fallback if map file is missing
         world = World([[1]*25] + [[1]+[0]*23+[1]]*18 + [[1]*25])
@@ -74,11 +81,15 @@ def main():
     context = GameContext(player, world)
     context.global_state = global_state
     context.save_manager = save_manager
+    context.orchestrator = orchestrator
     context.screen = screen
+    context.signal_bus = signal_bus
+    context.quest_manager = quest_manager
     
     api = MapAPI(context)
     director = DirectorEngine(context, api)
     context.director = director
+    quest_manager.director = director
     
     manager = SceneManager(context)
     context.scene_manager = manager
