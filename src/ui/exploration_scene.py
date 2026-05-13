@@ -65,6 +65,11 @@ class ExplorationScene(Scene):
                     self.manager.push(MenuScene(self.manager))
 
     def update(self, dt):
+        # Update Notifications
+        nm = getattr(self.context, "notification_manager", None)
+        if nm:
+            nm.update(dt)
+
         # Only process movement if this is the active scene
         if self.manager.active_scene != self:
             return
@@ -206,6 +211,12 @@ class ExplorationScene(Scene):
 
         # UI Overlay (Energy)
         self._draw_text(screen, f"Energia: {self.context.player.energy}/3", 20, 20, size=20, color=(255, 255, 0), align="left")
+
+        # Notifications
+        nm = getattr(self.context, "notification_manager", None)
+        if nm:
+            for i, notif in enumerate(nm.notifications):
+                self._draw_text(screen, notif["text"], 400, 30 + i*25, size=18, color=notif["color"], align="center")
 
         # Draw Fade Overlay
         if self.fade_alpha > 0:

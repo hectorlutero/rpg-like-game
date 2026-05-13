@@ -14,6 +14,7 @@ from src.core.state import GlobalState
 from src.core.signals import SignalBus
 from src.logic.director import DirectorEngine, MapAPI
 from src.logic.quest_manager import QuestManager
+from src.ui.notifications import NotificationManager
 
 def main():
     pygame.init()
@@ -69,6 +70,10 @@ def main():
     quest_manager = QuestManager(global_state, signal_bus)
     quest_manager.load_quests("data/quests.json")
     signal_bus.subscribe_all(quest_manager.on_event)
+    
+    notification_manager = NotificationManager()
+    signal_bus.subscribe("QUEST_UPDATED", notification_manager.on_quest_updated)
+    signal_bus.subscribe("QUEST_COMPLETED", notification_manager.on_quest_completed)
 
     # --- 3. World & Orchestration ---
     orchestrator = WorldOrchestrator(registry, global_state)
@@ -85,6 +90,7 @@ def main():
     context.screen = screen
     context.signal_bus = signal_bus
     context.quest_manager = quest_manager
+    context.notification_manager = notification_manager
     
     api = MapAPI(context)
     director = DirectorEngine(context, api)

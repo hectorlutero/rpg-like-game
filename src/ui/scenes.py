@@ -13,6 +13,7 @@ class GameContext:
         self.director = None # Injetado no main
         self.signal_bus = None # Injetado no main
         self.quest_manager = None # Injetado no main
+        self.notification_manager = None # Injetado no main
         
     @property
     def opened_chests(self):
