@@ -86,3 +86,17 @@ def test_reward_script_trigger():
     manager.on_event({"type": "ITEM", "target": "Apple"})
     
     director.run_script.assert_called_with("done")
+
+def test_quest_querying():
+    state = GlobalState()
+    manager = QuestManager(state, None)
+    state.quests["q1"] = {"stage": 2, "status": "IN_PROGRESS"}
+    state.quests["q2"] = {"stage": 0, "status": "COMPLETED"}
+    
+    assert manager.get_quest_stage("q1") == 2
+    assert manager.get_quest_stage("q2") == 0
+    assert manager.get_quest_stage("nonexistent") == -1
+    
+    assert manager.is_completed("q2") is True
+    assert manager.is_completed("q1") is False
+    assert manager.is_completed("nonexistent") is False

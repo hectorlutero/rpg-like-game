@@ -10,6 +10,16 @@ class MapAPI:
     def get_flag(self, key, default=False):
         return self.context.global_state.get_flag(key, default)
 
+    def get_quest_stage(self, quest_id):
+        if hasattr(self.context, "quest_manager") and self.context.quest_manager:
+            return self.context.quest_manager.get_quest_stage(quest_id)
+        return -1
+
+    def is_quest_completed(self, quest_id):
+        if hasattr(self.context, "quest_manager") and self.context.quest_manager:
+            return self.context.quest_manager.is_completed(quest_id)
+        return False
+
     def say(self, text):
         """Triggers a dialogue overlay."""
         return ("say", text)

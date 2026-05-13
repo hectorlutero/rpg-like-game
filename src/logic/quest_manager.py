@@ -83,3 +83,13 @@ class QuestManager:
         if not self.global_state:
             return []
         return [qid for qid, s in self.global_state.quests.items() if s["status"] == "IN_PROGRESS"]
+
+    def get_quest_stage(self, quest_id):
+        if not self.global_state or quest_id not in self.global_state.quests:
+            return -1
+        return self.global_state.quests[quest_id].get("stage", -1)
+
+    def is_completed(self, quest_id):
+        if not self.global_state or quest_id not in self.global_state.quests:
+            return False
+        return self.global_state.quests[quest_id].get("status") == "COMPLETED"
