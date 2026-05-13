@@ -25,40 +25,53 @@ def draw_grid_and_path(screen, grid, start, target, path, case_name):
         return
 
     tile_size = 32
-    screen.fill((20, 20, 20))
     
-    # Draw Grid
-    for y, row in enumerate(grid):
-        for x, val in enumerate(row):
-            color = (50, 50, 50) if val == 0 else (100, 100, 100) # Floor = dark gray, Wall = gray
-            rect = (x * tile_size, y * tile_size, tile_size, tile_size)
-            pygame.draw.rect(screen, color, rect)
-            pygame.draw.rect(screen, (30, 30, 30), rect, 1) # border
-            
-    # Draw Path
-    for (px, py) in path:
-        rect = (px * tile_size + 8, py * tile_size + 8, tile_size - 16, tile_size - 16)
-        pygame.draw.rect(screen, (0, 255, 0), rect) # Green
+    def render_base():
+        screen.fill((20, 20, 20))
+        # Draw Grid
+        for y, row in enumerate(grid):
+            for x, val in enumerate(row):
+                color = (50, 50, 50) if val == 0 else (100, 100, 100) # Floor = dark gray, Wall = gray
+                rect = (x * tile_size, y * tile_size, tile_size, tile_size)
+                pygame.draw.rect(screen, color, rect)
+                pygame.draw.rect(screen, (30, 30, 30), rect, 1) # border
+                
+        # Draw Start and Target
+        pygame.draw.rect(screen, (0, 0, 255), (start[0] * tile_size + 4, start[1] * tile_size + 4, tile_size - 8, tile_size - 8)) # Blue
+        pygame.draw.rect(screen, (255, 0, 0), (target[0] * tile_size + 4, target[1] * tile_size + 4, tile_size - 8, tile_size - 8)) # Red
         
-    # Draw Start and Target
-    pygame.draw.rect(screen, (0, 0, 255), (start[0] * tile_size + 4, start[1] * tile_size + 4, tile_size - 8, tile_size - 8)) # Blue
-    pygame.draw.rect(screen, (255, 0, 0), (target[0] * tile_size + 4, target[1] * tile_size + 4, tile_size - 8, tile_size - 8)) # Red
-    
-    # Draw Case Name
-    if pygame.font.get_init():
-        font = pygame.font.SysFont(None, 24)
-        text = font.render(case_name, True, (255, 255, 255))
-        screen.blit(text, (10, len(grid) * tile_size + 10))
+        # Draw Case Name
+        if pygame.font.get_init():
+            font = pygame.font.SysFont(None, 24)
+            text = font.render(case_name, True, (255, 255, 255))
+            screen.blit(text, (10, len(grid) * tile_size + 10))
 
-    pygame.display.flip()
-    
-    # Let user see the path
-    for _ in range(20): # 2 seconds
+    if not path:
+        render_base()
+        pygame.display.flip()
+        time.sleep(2)
+        return
+
+    # Animate movement along the path
+    for step in path:
+        render_base()
+        
+        # Draw Entity moving (Green square)
+        rect = (step[0] * tile_size + 8, step[1] * tile_size + 8, tile_size - 16, tile_size - 16)
+        pygame.draw.rect(screen, (0, 255, 0), rect)
+        
+        pygame.display.flip()
+        
+        # Keep window responsive
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-        time.sleep(0.1)
+                
+        time.sleep(0.4) # Wait 400ms per step to make animation clearly visible
+        
+    # Pause at the end of the path before moving to the next case
+    time.sleep(1.5)
 
 def setup_pygame():
     if WATCH_MODE:
