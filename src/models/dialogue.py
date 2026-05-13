@@ -8,6 +8,7 @@ class NPC(Interactable):
         self.position = position
         self.dialogue_data = dialogue_data
         self.kwargs = kwargs # Storing extra data might be useful for scripts later
+        self.ai = None # AIController instance
 
     def on_interact(self, context):
         """Returns a DialogueManager to be used by the scene."""

@@ -46,6 +46,15 @@ class WorldOrchestrator:
             
         return world
 
+    def update_ai(self, world, dt):
+        """Ticks AI reasoning for all entities in the world."""
+        # Make a copy of values to avoid 'dictionary changed size during iteration' 
+        # although move_interactable doesn't change dict size, just values.
+        # But it's safer.
+        for entity in list(world.interactables.values()):
+            if hasattr(entity, "ai") and entity.ai:
+                entity.ai.update(entity, world, dt)
+
     def get_tag_position(self, tag_name):
         """Returns the tile coordinates (tx, ty) for a given tag."""
         tag = self.current_tags.get(tag_name)

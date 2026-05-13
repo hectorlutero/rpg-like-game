@@ -70,6 +70,11 @@ class ExplorationScene(Scene):
         if nm:
             nm.update(dt)
 
+        # Update AI Reasoning
+        orchestrator = getattr(self.context, "orchestrator", None)
+        if orchestrator:
+            orchestrator.update_ai(self.context.world, dt)
+
         # Only process movement if this is the active scene
         if self.manager.active_scene != self:
             return

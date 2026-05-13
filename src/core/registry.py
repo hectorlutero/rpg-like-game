@@ -48,7 +48,18 @@ class EntityRegistry:
             data["position"] = Position(data.get("position", {}).get("x", 0), 
                                        data.get("position", {}).get("y", 0))
 
-        return cls(**data)
+        entity = cls(**data)
+        
+        # Attach AI if specified in data
+        ai_type = data.get("ai_behavior")
+        if ai_type:
+            from src.logic.ai_controller import AIController, RandomWanderBehavior, StaticBehavior
+            if ai_type == "random_wander":
+                entity.ai = AIController(RandomWanderBehavior())
+            elif ai_type == "static":
+                entity.ai = AIController(StaticBehavior())
+                
+        return entity
 
     def spawn_to_map(self, entity_id, world, tx, ty, **overrides):
         """Spawns an entity and adds it to the world at tile coordinates (tx, ty)."""

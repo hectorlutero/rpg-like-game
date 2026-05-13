@@ -10,7 +10,8 @@
     "type": "NPC",
     "data": {
       "name": "João",
-      "dialogue_data": ["Olá, viajante!"]
+      "dialogue_data": ["Olá, viajante!"],
+      "ai_behavior": "random_wander"
     }
   },
   "slime": {
