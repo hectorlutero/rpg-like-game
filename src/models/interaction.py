@@ -239,6 +239,15 @@ class InteractionManager:
             
             self.selected_index = 0
 
+    def handle_event(self, event):
+        if not self.active_dialogue:
+            return
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_UP: self.process_command("up")
+            elif event.key == pygame.K_DOWN: self.process_command("down")
+            elif event.key in [pygame.K_SPACE, pygame.K_RETURN]: self.process_command("space")
+
     def process_command(self, cmd):
         if not self.active_dialogue:
             return

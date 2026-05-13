@@ -72,5 +72,11 @@ class EntityRegistry:
             
         entity = self.spawn(entity_id, **overrides)
         if entity:
-            world.add_interactable(tx, ty, entity)
+            # If position was overridden, we MUST update tx, ty for the dictionary key
+            if hasattr(entity, "position"):
+                actual_tx = int(entity.position.x // world.tile_size)
+                actual_ty = int(entity.position.y // world.tile_size)
+                world.add_interactable(actual_tx, actual_ty, entity)
+            else:
+                world.add_interactable(tx, ty, entity)
         return entity

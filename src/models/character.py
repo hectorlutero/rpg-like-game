@@ -241,3 +241,13 @@ class Character:
         self.level += 1
         self.current_hp = self.get_attribute('vida')
         self.current_mana = self.get_attribute('mana')
+
+    def draw(self, screen, pos):
+        """Draws the character on the map."""
+        import pygame
+        # Basic representation: Blue circle for player
+        pygame.draw.circle(screen, (50, 50, 200), (int(pos[0]), int(pos[1])), 12)
+        # Orientation marker
+        offset_map = {"N": (0, -10), "S": (0, 10), "E": (10, 0), "W": (-10, 0)}
+        ox, oy = offset_map.get(self.facing_direction, (0, 0))
+        pygame.draw.line(screen, (255, 255, 255), pos, (pos[0] + ox, pos[1] + oy), 2)

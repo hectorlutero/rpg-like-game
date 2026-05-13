@@ -42,7 +42,10 @@ class WorldOrchestrator:
                 if delta:
                     overrides.update(delta)
 
-            self.registry.spawn_to_map(entity_id, world, tx, ty, **overrides)
+            # Clean overrides to avoid duplicate arguments
+            clean_overrides = {k: v for k, v in overrides.items() if k not in ["entity_id", "id"]}
+
+            self.registry.spawn_to_map(entity_id, world, tx, ty, **clean_overrides)
             
         return world
 
