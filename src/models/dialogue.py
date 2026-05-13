@@ -3,10 +3,11 @@ import math
 from src.models.interaction import Interactable
 
 class NPC(Interactable):
-    def __init__(self, name, position, dialogue_data=None):
+    def __init__(self, name, position, dialogue_data=None, **kwargs):
         self.name = name
         self.position = position
         self.dialogue_data = dialogue_data
+        self.kwargs = kwargs # Storing extra data might be useful for scripts later
 
     def on_interact(self, context):
         """Returns a DialogueManager to be used by the scene."""

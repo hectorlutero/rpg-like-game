@@ -20,7 +20,7 @@ class Interactable:
         pygame.draw.rect(screen, (150, 150, 150), (pos[0], pos[1], 32, 32))
 
 class MagicBook(Interactable):
-    def __init__(self, skill_name, int_threshold, min_level=1):
+    def __init__(self, skill_name, int_threshold, min_level=1, **kwargs):
         self.skill_name = skill_name
         self.int_threshold = int_threshold
         self.min_level = min_level
@@ -62,7 +62,7 @@ class MagicBook(Interactable):
         pygame.draw.rect(screen, (150, 50, 255), (pos[0] + 8, pos[1] + 8, 16, 16))
 
 class TrainingObject(Interactable):
-    def __init__(self, name, attribute_key):
+    def __init__(self, name, attribute_key, **kwargs):
         self.name = name
         self.attribute_key = attribute_key
 
@@ -85,7 +85,7 @@ class TrainingObject(Interactable):
         pygame.draw.rect(screen, (150, 100, 50), (pos[0] + 4, pos[1] + 4, 24, 24))
 
 class Chest(Interactable):
-    def __init__(self, items=None, gold=0, chest_id=None, custom_msg=None):
+    def __init__(self, items=None, gold=0, chest_id=None, custom_msg=None, **kwargs):
         self.items = items or [] # List of Item names or objects
         self.gold = gold
         self.chest_id = chest_id # Essential for persistence

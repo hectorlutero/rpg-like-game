@@ -37,6 +37,12 @@ class EntityRegistry:
         data = prefab.get("data", {}).copy()
         data.update(overrides)
         
+        # Convert "position" dict to Position object if present
+        if "position" in data and isinstance(data["position"], dict):
+            from src.models.world import Position
+            data["position"] = Position(data.get("position", {}).get("x", 0), 
+                                       data.get("position", {}).get("y", 0))
+
         return cls(**data)
 
     def spawn_to_map(self, entity_id, world, tx, ty, **overrides):
