@@ -90,7 +90,7 @@ class Chest(Interactable):
         self.gold = gold
         self.chest_id = chest_id # Essential for persistence
         self.custom_msg = custom_msg
-        self._is_open = False
+        self._is_open = kwargs.get("_is_open", False)
 
     @property
     def is_open(self):
@@ -114,7 +114,7 @@ class Chest(Interactable):
         
         # Track in context for persistence
         if self.chest_id:
-            context.opened_chests.add(self.chest_id)
+            context.global_state.set_entity_delta(self.chest_id, {"_is_open": True, "gold": 0, "items": []})
 
         msg = self.custom_msg or "Você abriu o baú!"
         if self.gold > 0:

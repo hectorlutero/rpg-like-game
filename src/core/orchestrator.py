@@ -3,8 +3,9 @@ import os
 from src.models.world import World
 
 class WorldOrchestrator:
-    def __init__(self, registry):
+    def __init__(self, registry, global_state=None):
         self.registry = registry
+        self.global_state = global_state
 
     def load_map(self, map_path):
         if not os.path.exists(map_path):
@@ -23,13 +24,23 @@ class WorldOrchestrator:
             ty = ent_info.get("y")
             overrides = ent_info.get("overrides", {}).copy()
             
-            # Inject calculated position (Registry will convert to Position object)
+            # Inject calculated position
             if "position" not in overrides:
                 overrides["position"] = {
                     "x": tx * world.tile_size + world.tile_size // 2,
                     "y": ty * world.tile_size + world.tile_size // 2
                 }
             
+            # Apply deltas if available
+            # First we need to know the unique chest_id or entity_id
+            # If 'chest_id' is in overrides, we use it as the key for deltas
+            unique_id = overrides.get("chest_id") or overrides.get("entity_id")
+            
+            if self.global_state and unique_id:
+                delta = self.global_state.get_entity_delta(unique_id)
+                if delta:
+                    overrides.update(delta)
+
             self.registry.spawn_to_map(entity_id, world, tx, ty, **overrides)
             
         return world

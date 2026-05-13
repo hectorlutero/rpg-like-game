@@ -38,10 +38,9 @@ def test_chest_persistence_sync():
     context = GameContext(player, world)
     
     # Simulate loading a game where chest is already open
-    context.opened_chests.add("chest_99")
-    
+    context.global_state.set_entity_delta("chest_99", {"_is_open": True})
+
     chest = Chest(gold=50, chest_id="chest_99")
-    
     # We need a way to sync chest state with context.opened_chests
     # Let's improve the Chest class to check context in on_interact
     

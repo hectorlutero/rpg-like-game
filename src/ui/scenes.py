@@ -1,3 +1,5 @@
+from src.core.state import GlobalState
+
 class GameContext:
     """O Estado Global do jogo. Contém os dados que persistem entre cenas."""
     def __init__(self, player, world):
@@ -6,7 +8,24 @@ class GameContext:
         self.party = [player]
         self.save_manager = None # Será injetado no main
         self.running = True
-        self.opened_chests = set() #IDs de baús abertos
+        self.global_state = GlobalState()
+        
+    @property
+    def opened_chests(self):
+        """Backward compatibility for opened_chests."""
+        # This is a bit tricky because the old code expects a set of IDs.
+        # We can scan deltas for _is_open=True
+        ids = set()
+        for eid, delta in self.global_state.deltas.items():
+            if delta.get("_is_open"):
+                ids.add(eid)
+        return ids
+
+    @opened_chests.setter
+    def opened_chests(self, value):
+        """Allows setting opened chests via a collection of IDs."""
+        for cid in value:
+            self.global_state.set_entity_delta(cid, {"_is_open": True})
 
 class Scene:
     """Interface base para todas as cenas do jogo."""

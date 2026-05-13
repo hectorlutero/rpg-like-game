@@ -24,18 +24,19 @@ class TestWorldPersistence(unittest.TestCase):
         # 1. Cria um baú e abre ele
         chest = Chest(chest_id="persistent_chest_1")
         # No novo sistema, basta adicionar ao contexto e o baú se auto-sincroniza
-        self.ctx.opened_chests.add("persistent_chest_1")
-        
+        self.ctx.global_state.set_entity_delta("persistent_chest_1", {"_is_open": True})
+
         # 2. Salva o contexto
         self.manager.save_game(self.ctx)
-        
+
         # 3. Simula um novo jogo carregando os dados
         loaded_data = self.manager.load_game()
-        self.assertIn("persistent_chest_1", loaded_data['opened_chests'])
-        
+        self.assertTrue(loaded_data['global_state']['deltas']['persistent_chest_1']['_is_open'])
         # 4. Verifica se a lógica de reconstrução funciona
         new_ctx = GameContext(self.player, self.world)
-        new_ctx.opened_chests = set(loaded_data.get('opened_chests', []))
+        if 'global_state' in loaded_data:
+            from src.core.state import GlobalState
+            new_ctx.global_state = GlobalState.from_dict(loaded_data['global_state'])
         
         # O baú no mapa deve responder ao estado carregado via check_open
         test_chest = Chest(chest_id="persistent_chest_1")

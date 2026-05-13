@@ -46,6 +46,14 @@ class ExplorationScene(Scene):
                         self.context.player.xp = save_data['xp']
                         self.context.player.energy = save_data.get('energy', 3)
                         self.context.player.skills = set(save_data.get('skills', []))
+                        
+                        if 'global_state' in save_data:
+                            from src.core.state import GlobalState
+                            self.context.global_state = GlobalState.from_dict(save_data['global_state'])
+                        elif 'opened_chests' in save_data: # Migração legada
+                            for cid in save_data['opened_chests']:
+                                self.context.global_state.set_entity_delta(cid, {"_is_open": True})
+
                         print("Jogo Carregado!")
                 elif event.key in [pygame.K_m, pygame.K_TAB]:
                     from src.ui.menu_scene import MenuScene

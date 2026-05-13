@@ -59,7 +59,12 @@ def main():
     
     # Restaura estado do mundo
     if save_data:
-        context.opened_chests = set(save_data.get('opened_chests', []))
+        if 'global_state' in save_data:
+            from src.core.state import GlobalState
+            context.global_state = GlobalState.from_dict(save_data['global_state'])
+        elif 'opened_chests' in save_data: # Migração legada
+            for cid in save_data['opened_chests']:
+                context.global_state.set_entity_delta(cid, {"_is_open": True})
 
     manager = SceneManager(context)
     context.scene_manager = manager
