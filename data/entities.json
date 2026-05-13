@@ -1,0 +1,16 @@
+{
+  "chest_basic": {
+    "type": "Chest",
+    "data": {
+      "items": ["potion"],
+      "gold": 10
+    }
+  },
+  "npc_villager": {
+    "type": "NPC",
+    "data": {
+      "name": "João",
+      "dialogue_data": ["Olá, viajante!"]
+    }
+  }
+}
