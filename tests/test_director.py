@@ -3,7 +3,9 @@ from src.logic.director import DirectorEngine, MapAPI
 from src.ui.scenes import GameContext
 from src.models.character import Character
 from src.models.classes import Warrior
-from src.models.world import World
+from src.models.world import World, Position
+from src.models.dialogue import NPC
+from src.models.combat import CombatManager
 
 def test_director_executes_generator():
     """Test that the director can start and advance a generator script."""
@@ -76,3 +78,64 @@ def test_director_branching_script():
     assert context.global_state.get_flag("said_yes") is True
     assert context.global_state.get_flag("said_no") is False
     assert director.is_busy() is False
+
+def test_director_move_to_non_blocking():
+    """Test that MapAPI.move_to advances movement across director cycles."""
+    player = Character("Test", Warrior())
+    npc = NPC("Guard", Position(0, 0))
+    world = World([[0]])
+    context = GameContext(player, world)
+    api = MapAPI(context)
+    director = DirectorEngine(context, api)
+    
+    def move_script():
+        # Move NPC from (0,0) to (10, 0) at speed 5
+        yield api.move_to(npc, Position(10, 0), speed=5)
+        context.global_state.set_flag("arrived", True)
+        
+    director.start_script(move_script())
+    
+    # After start, NPC should be at (0,0) but script is busy
+    assert director.is_busy() is True
+    assert context.global_state.get_flag("arrived") is False
+    
+    # First tick
+    director.update(1.0) # Should move 5 pixels
+    assert npc.position.x == 5
+    assert context.global_state.get_flag("arrived") is False
+    
+    # Second tick
+    director.update(1.0) # Should reach (10,0) and finish "move_to"
+    assert npc.position.x == 10
+    assert npc.position.y == 0
+    
+    # The script should have advanced to set the flag
+    assert context.global_state.get_flag("arrived") is True
+    assert director.is_busy() is False
+
+def test_director_combat_hook():
+    """Test that the director can intercept events in combat."""
+    player = Character("Hero", Warrior())
+    enemy = Character("Slime", Warrior())
+    cm = CombatManager([player], [enemy])
+    
+    world = World([[0]])
+    context = GameContext(player, world)
+    api = MapAPI(context)
+    director = DirectorEngine(context, api)
+    director.attach_combat(cm)
+    
+    def battle_script():
+        yield ("combat_hook", "enemy_hp", 10)
+        api.set_flag("hook_triggered", True)
+        yield api.say("Renda-se!")
+        
+    director.start_script(battle_script())
+    
+    # Damage enemy
+    enemy.hp = 5
+    director.update(0.1) # Triggers check_combat_hooks
+    
+    assert context.global_state.get_flag("hook_triggered") is True
+    assert director.current_action[0] == "say"
+    assert director.current_action[1] == "Renda-se!"
