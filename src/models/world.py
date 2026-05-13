@@ -25,6 +25,30 @@ class World:
     def get_interactable_at(self, tx, ty):
         return self.interactables.get((tx, ty))
 
+    def move_interactable(self, from_tx, from_ty, to_tx, to_ty):
+        """
+        Attempts to move an interactable from one tile to another.
+        Rejects movement and returns False if the target is out of bounds,
+        a solid wall, or already occupied by another interactable.
+        Returns True if successful.
+        """
+        if (from_tx, from_ty) not in self.interactables:
+            return False
+
+        if to_tx < 0 or to_tx >= self.width or to_ty < 0 or to_ty >= self.height:
+            return False
+
+        if self.grid[to_ty][to_tx] == 1: # 1 means solid wall
+            return False
+
+        if (to_tx, to_ty) in self.interactables:
+            return False
+
+        # Move the entity in the dictionary
+        entity = self.interactables.pop((from_tx, from_ty))
+        self.interactables[(to_tx, to_ty)] = entity
+        return True
+
     def get_interactable_at_pixel(self, px, py):
         tx = int(px // self.tile_size)
         ty = int(py // self.tile_size)
