@@ -25,6 +25,11 @@ class SaveManager:
 
     def save_game(self, context):
         """Serializes player and world data to a JSON file."""
+        # Protection: No saving while a script is busy
+        if hasattr(context, "director") and context.director and context.director.is_busy():
+            print("Cannot save while a script is running.")
+            return False
+
         player = context.player
         try:
             data = {

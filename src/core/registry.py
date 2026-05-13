@@ -2,6 +2,8 @@ import json
 import os
 from src.models.interaction import Chest, MagicBook, TrainingObject
 from src.models.dialogue import NPC
+from src.models.combat import EnemyInteractable
+from src.ui.shop_scene import Shopkeeper
 
 class EntityRegistry:
     def __init__(self, data_path):
@@ -11,7 +13,9 @@ class EntityRegistry:
             "Chest": Chest,
             "NPC": NPC,
             "MagicBook": MagicBook,
-            "TrainingObject": TrainingObject
+            "TrainingObject": TrainingObject,
+            "Enemy": EnemyInteractable,
+            "Shopkeeper": Shopkeeper
         }
 
     def _load_data(self):

@@ -9,6 +9,7 @@ class GameContext:
         self.save_manager = None # Será injetado no main
         self.running = True
         self.global_state = GlobalState()
+        self.director = None # Injetado no main
         
     @property
     def opened_chests(self):

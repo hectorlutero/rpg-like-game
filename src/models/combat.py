@@ -5,11 +5,18 @@ from src.models.interaction import Interactable
 from src.models.status import StatusManager
 
 class EnemyInteractable(Interactable):
-    def __init__(self, name, character_class, level, world_pos, gold_yield=50, xp_yield=100, loot_table=None):
+    def __init__(self, name, character_class, level, world_pos=None, gold_yield=50, xp_yield=100, loot_table=None, **kwargs):
         self.name = name
-        self.character_class = character_class
+        # If character_class is a string, we need to map it (for LEGO engine)
+        from src.models.classes import Warrior, Mage, Rogue
+        class_map = {"Warrior": Warrior, "Mage": Mage, "Rogue": Rogue}
+        if isinstance(character_class, str):
+            self.character_class = class_map.get(character_class, Warrior)()
+        else:
+            self.character_class = character_class
+            
         self.level = level
-        self.world_pos = world_pos 
+        self.world_pos = world_pos or kwargs.get("position")
         self.gold_yield = gold_yield
         self.xp_yield = xp_yield
         self.loot_table = loot_table or {}

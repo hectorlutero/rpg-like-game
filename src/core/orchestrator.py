@@ -6,6 +6,7 @@ class WorldOrchestrator:
     def __init__(self, registry, global_state=None):
         self.registry = registry
         self.global_state = global_state
+        self.current_tags = {}
 
     def load_map(self, map_path):
         if not os.path.exists(map_path):
@@ -16,6 +17,8 @@ class WorldOrchestrator:
             
         grid = map_data.get("grid", [])
         world = World(grid)
+        
+        self.current_tags = map_data.get("tags", {})
         
         entities_data = map_data.get("entities", [])
         for ent_info in entities_data:
@@ -32,8 +35,6 @@ class WorldOrchestrator:
                 }
             
             # Apply deltas if available
-            # First we need to know the unique chest_id or entity_id
-            # If 'chest_id' is in overrides, we use it as the key for deltas
             unique_id = overrides.get("chest_id") or overrides.get("entity_id")
             
             if self.global_state and unique_id:
@@ -44,3 +45,10 @@ class WorldOrchestrator:
             self.registry.spawn_to_map(entity_id, world, tx, ty, **overrides)
             
         return world
+
+    def get_tag_position(self, tag_name):
+        """Returns the tile coordinates (tx, ty) for a given tag."""
+        tag = self.current_tags.get(tag_name)
+        if tag:
+            return tag.get("x"), tag.get("y")
+        return None, None

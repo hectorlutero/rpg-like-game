@@ -3,9 +3,10 @@ from src.ui.scenes import Scene
 from src.models.interaction import SelectionManager, Interactable
 
 class Shopkeeper(Interactable):
-    def __init__(self, name, inventory_items):
+    def __init__(self, name, inventory_items, **kwargs):
         self.name = name
-        self.inventory_items = inventory_items # List of item names
+        self.inventory_items = inventory_items
+ # List of item names
 
     def on_interact(self, context):
         return ShopScene(context.scene_manager, self.name, self.inventory_items)
