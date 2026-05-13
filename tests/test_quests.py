@@ -68,6 +68,30 @@ def test_quest_progression():
     manager.on_event({"type": "KILL", "target": "Slime"})
     assert state.quests["q1"]["status"] == "COMPLETED"
 
+def test_countable_quest_progression():
+    state = GlobalState()
+    bus = MagicMock()
+    manager = QuestManager(state, bus)
+    manager.quests = {
+        "q1": {
+            "stages": [
+                {"id": 0, "objectives": [{"type": "KILL", "target": "Slime", "count": 3}]}
+            ]
+        }
+    }
+    
+    manager.accept_quest("q1")
+    
+    manager.on_event({"type": "KILL", "target": "Slime"})
+    assert state.quests["q1"]["status"] == "IN_PROGRESS"
+    
+    manager.on_event({"type": "KILL", "target": "Slime"})
+    assert state.quests["q1"]["status"] == "IN_PROGRESS"
+    
+    manager.on_event({"type": "KILL", "target": "Slime"})
+    assert state.quests["q1"]["status"] == "COMPLETED"
+
+
 def test_reward_script_trigger():
     state = GlobalState()
     bus = MagicMock()

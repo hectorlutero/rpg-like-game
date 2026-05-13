@@ -46,13 +46,17 @@ class QuestManager:
             current_stage = stages[current_stage_idx]
             objectives_data = current_stage.get("objectives", [])
             
-            from src.logic.quest_objectives import EventObjective
+            from src.logic.quest_objectives import EventObjective, CountableObjective
             
             # Instantiate objectives
             objectives = []
             for obj_data in objectives_data:
-                # In the future, we could have an ObjectiveFactory based on obj_data
-                objectives.append(EventObjective(obj_data.get("type"), obj_data.get("target")))
+                count = obj_data.get("count")
+                if count and count > 1:
+                    progress_key = f"{obj_data.get('type')}_{obj_data.get('target')}"
+                    objectives.append(CountableObjective(obj_data.get("type"), obj_data.get("target"), count, progress_key))
+                else:
+                    objectives.append(EventObjective(obj_data.get("type"), obj_data.get("target")))
             
             # Check if event matches any objective
             match = False
