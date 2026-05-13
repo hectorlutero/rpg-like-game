@@ -63,6 +63,13 @@ class EntityRegistry:
 
     def spawn_to_map(self, entity_id, world, tx, ty, **overrides):
         """Spawns an entity and adds it to the world at tile coordinates (tx, ty)."""
+        if "position" not in overrides:
+            from src.models.world import Position
+            overrides["position"] = Position(
+                tx * world.tile_size + world.tile_size // 2,
+                ty * world.tile_size + world.tile_size // 2
+            )
+            
         entity = self.spawn(entity_id, **overrides)
         if entity:
             world.add_interactable(tx, ty, entity)
