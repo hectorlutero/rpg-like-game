@@ -96,6 +96,7 @@ def main():
     director = DirectorEngine(context, api)
     context.director = director
     quest_manager.director = director
+    quest_manager.game_context = context
     
     manager = SceneManager(context)
     context.scene_manager = manager

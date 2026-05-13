@@ -7,6 +7,7 @@ class QuestManager:
         self.signal_bus = signal_bus
         self.quests = {}
         self.director = None # Injected later
+        self.game_context = None # Injected later
 
     def load_quests(self, path):
         if not os.path.exists(path):
@@ -66,7 +67,8 @@ class QuestManager:
         action_context = {
             "director": self.director,
             "global_state": self.global_state,
-            "signal_bus": self.signal_bus
+            "signal_bus": self.signal_bus,
+            "game_context": self.game_context
         }
         
         # New action system
@@ -77,10 +79,17 @@ class QuestManager:
         if reward_script:
             actions_data.append({"type": "RUN_SCRIPT", "script": reward_script})
 
-        from src.logic.quest_actions import RunScriptAction
+        from src.logic.quest_actions import RunScriptAction, GiveItemAction, GiveXPAction
         for act_data in actions_data:
+            action = None
             if act_data.get("type") == "RUN_SCRIPT":
                 action = RunScriptAction(act_data.get("script"))
+            elif act_data.get("type") == "GIVE_ITEM":
+                action = GiveItemAction(act_data.get("item"))
+            elif act_data.get("type") == "GIVE_XP":
+                action = GiveXPAction(act_data.get("amount"))
+                
+            if action:
                 action.execute(action_context)
             
         # Advance to next stage or complete
