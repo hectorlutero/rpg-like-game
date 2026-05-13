@@ -1,6 +1,6 @@
 import pygame
 from src.ui.scenes import Scene
-from src.models.interaction import InteractionManager
+from src.models.interaction import InteractionManager, Portal, TransitionRequest
 from src.ui.interaction_renderer import InteractionRenderer
 
 class ExplorationScene(Scene):
@@ -12,10 +12,15 @@ class ExplorationScene(Scene):
         self.interaction_manager = InteractionManager(self.context, self.manager)
         self.interaction_renderer = InteractionRenderer()
         self.player_speed = 4
+        self.is_transitioning = False
+        self.fade_alpha = 0
+        self.fade_target = 0
+        self.fade_speed = 510 # Alpha per second (approx 0.5s for full fade)
+        self.pending_transition = None
 
     def handle_event(self, event):
-        # Only process events if this is the active scene
-        if self.manager.active_scene != self:
+        # Only process events if this is the active scene and no fade is active
+        if self.manager.active_scene != self or self.fade_alpha > 0:
             return
 
         if event.type == pygame.KEYDOWN:
@@ -64,8 +69,37 @@ class ExplorationScene(Scene):
         if self.manager.active_scene != self:
             return
 
+        # Process any pending transition requests from interaction
+        if self.interaction_manager.requested_transition:
+            req = self.interaction_manager.requested_transition
+            self.interaction_manager.requested_transition = None
+            self.trigger_transition(req)
+
+        # Update Fade Animation
+        if self.fade_alpha != self.fade_target:
+            step = self.fade_speed * dt
+            if self.fade_alpha < self.fade_target:
+                self.fade_alpha = min(self.fade_target, self.fade_alpha + step)
+            else:
+                self.fade_alpha = max(self.fade_target, self.fade_alpha - step)
+
+        # Block everything else if fading
+        if self.fade_alpha > 0:
+            # Check if reached peak
+            if self.fade_alpha == 255 and self.fade_target == 255:
+                self._execute_transition()
+            return
+
         if not self.interaction_manager.is_active:
-            keys = pygame.key.get_pressed()
+            # Safety check for video system (important for headless tests or watch mode)
+            if not pygame.display.get_init():
+                return
+                
+            try:
+                keys = pygame.key.get_pressed()
+            except pygame.error:
+                return # Skip input processing if system is not ready
+
             dx, dy = 0, 0
             if keys[pygame.K_LEFT] or keys[pygame.K_a]: dx = -self.player_speed
             if keys[pygame.K_RIGHT] or keys[pygame.K_d]: dx = self.player_speed
@@ -76,6 +110,66 @@ class ExplorationScene(Scene):
                 if self.context.world.can_move_to(self.context.player, self.context.player.position.x + dx, self.context.player.position.y + dy):
                     self.context.player.position.move(dx, dy)
                     self.context.player.update_orientation(dx, dy)
+                    self._check_on_step_triggers()
+
+    def _execute_transition(self):
+        """Perform the actual map swap and auto-save at the peak of the fade."""
+        req = self.pending_transition
+        if not req:
+            self.fade_target = 0
+            return
+            
+        print(f"Executing transition to {req.target_map}...")
+        
+        orchestrator = self.context.orchestrator
+        if not orchestrator:
+            print("Error: No orchestrator found in context.")
+            self.fade_target = 0
+            self.pending_transition = None
+            return
+
+        # 1. Load the new map
+        map_path = f"data/maps/{req.target_map}"
+        new_world = orchestrator.load_map(map_path)
+        
+        if new_world:
+            self.context.world = new_world
+            
+            # 2. Position the player using the target tag
+            tx, ty = orchestrator.get_tag_position(req.target_tag)
+            if tx is not None and ty is not None:
+                self.context.player.position.x = tx * new_world.tile_size + new_world.tile_size // 2
+                self.context.player.position.y = ty * new_world.tile_size + new_world.tile_size // 2
+            else:
+                print(f"Warning: Tag '{req.target_tag}' not found in {req.target_map}. Keeping current position.")
+
+            # 3. Auto-save
+            if self.context.save_manager:
+                if self.context.save_manager.save_game(self.context):
+                    print("Auto-save completed.")
+        else:
+            print(f"Error: Could not load map {map_path}")
+
+        # 4. Trigger Fade In
+        self.pending_transition = None
+        self.fade_target = 0
+
+    def _check_on_step_triggers(self):
+        """Checks if the player stepped on an automatic trigger (like a Portal)."""
+        world = self.context.world
+        tx = int(self.context.player.position.x // world.tile_size)
+        ty = int(self.context.player.position.y // world.tile_size)
+        
+        target = world.get_interactable_at(tx, ty)
+        if isinstance(target, Portal) and not target.require_interaction:
+            self.trigger_transition(target.on_interact(self.context))
+
+    def trigger_transition(self, request):
+        """Starts the transition process (Fade Out -> Swap -> Fade In)."""
+        if not request: return
+        print(f"Triggering transition to {request.target_map} at {request.target_tag}")
+        self.fade_target = 255
+        self.pending_transition = request
 
     def draw(self, screen):
         # Draw Map
@@ -112,3 +206,10 @@ class ExplorationScene(Scene):
 
         # UI Overlay (Energy)
         self._draw_text(screen, f"Energia: {self.context.player.energy}/3", 20, 20, size=20, color=(255, 255, 0), align="left")
+
+        # Draw Fade Overlay
+        if self.fade_alpha > 0:
+            fade_surf = pygame.Surface(screen.get_size())
+            fade_surf.set_alpha(int(self.fade_alpha))
+            fade_surf.fill((0, 0, 0))
+            screen.blit(fade_surf, (0, 0))

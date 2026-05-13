@@ -36,5 +36,13 @@
       "skill_name": "Bola de Fogo",
       "int_threshold": 10
     }
+  },
+  "portal": {
+    "type": "Portal",
+    "data": {
+      "target_map": "forest.json",
+      "target_tag": "entrance",
+      "require_interaction": false
+    }
   }
 }

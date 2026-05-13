@@ -4,15 +4,35 @@ class InteractionRenderer:
     """Renderer especializado para a camada de visão de interações."""
     def __init__(self, screen=None):
         self.screen = screen
-        # Fallback para fontes se não inicializadas (geralmente via pygame.font.init())
-        self.font_name = pygame.font.SysFont("Arial", 20, bold=True)
-        self.font_text = pygame.font.SysFont("Arial", 18)
-        self.font_choice = pygame.font.SysFont("Arial", 18)
+        self._fonts_ready = False
+        self.font_name = None
+        self.font_text = None
+        self.font_choice = None
+
+    def _setup_fonts(self):
+        """Inicializa as fontes apenas se necessário e se o Pygame estiver pronto."""
+        if self._fonts_ready:
+            return
+        
+        if not pygame.font.get_init():
+            pygame.font.init()
+            
+        try:
+            self.font_name = pygame.font.SysFont("Arial", 20, bold=True)
+            self.font_text = pygame.font.SysFont("Arial", 18)
+            self.font_choice = pygame.font.SysFont("Arial", 18)
+            self._fonts_ready = True
+        except Exception as e:
+            print(f"Warning: Could not initialize fonts in InteractionRenderer: {e}")
 
     def render(self, view_model):
         """Desenha o estado da interação na tela baseado no DTO (view_model)."""
         if not view_model:
             return
+
+        self._setup_fonts()
+        if not self._fonts_ready:
+            return # Skip rendering if fonts failed to load
 
         # Dialogue Box (Centralizada na parte inferior)
         pygame.draw.rect(self.screen, (0, 0, 0), (50, 400, 700, 150))

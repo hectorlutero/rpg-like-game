@@ -1,6 +1,6 @@
 import json
 import os
-from src.models.interaction import Chest, MagicBook, TrainingObject
+from src.models.interaction import Chest, MagicBook, TrainingObject, Portal
 from src.models.dialogue import NPC
 from src.models.combat import EnemyInteractable
 from src.ui.shop_scene import Shopkeeper
@@ -15,7 +15,8 @@ class EntityRegistry:
             "MagicBook": MagicBook,
             "TrainingObject": TrainingObject,
             "Enemy": EnemyInteractable,
-            "Shopkeeper": Shopkeeper
+            "Shopkeeper": Shopkeeper,
+            "Portal": Portal
         }
 
     def _load_data(self):

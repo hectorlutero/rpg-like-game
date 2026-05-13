@@ -1,5 +1,5 @@
 {
-  "name": "Vila Inicial",
+  "name": "Deep Forest",
   "grid": [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -11,7 +11,7 @@
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -24,45 +24,23 @@
   ],
   "entities": [
     {
-      "id": "npc_villager",
-      "x": 12,
-      "y": 9,
+      "id": "portal",
+      "x": 0,
+      "y": 10,
       "overrides": {
-        "name": "Guarda",
-        "dialogue_data": {
-          "0": {"text": "Olá! Sistema de interação direcional ativado.", "choices": {"Incrível": "1", "Top": "1"}},
-          "1": {"text": "Agora você só fala comigo se estiver de frente!", "choices": null}
-        }
+        "target_map": "starting_village.json",
+        "target_tag": "forest_entrance",
+        "require_interaction": false
       }
     },
     {
       "id": "slime",
-      "x": 6,
-      "y": 12
-    },
-    {
-      "id": "training_dummy",
-      "x": 9,
-      "y": 3
-    },
-    {
-      "id": "fireball_book",
-      "x": 4,
-      "y": 3
-    },
-    {
-      "id": "chest_basic",
-      "x": 15,
-      "y": 3,
-      "overrides": {
-        "chest_id": "spawn_chest_1",
-        "items": ["Escudo de Madeira"],
-        "gold": 100
-      }
+      "x": 10,
+      "y": 5
     }
   ],
   "tags": {
-    "entrance": {"x": 2, "y": 2},
-    "village_center": {"x": 12, "y": 10}
+    "village_entrance": {"x": 1, "y": 10},
+    "forest_center": {"x": 12, "y": 10}
   }
 }
