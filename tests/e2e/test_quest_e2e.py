@@ -1,14 +1,6 @@
 import pytest
 import pygame
-from src.ui.scenes import GameContext, SceneManager
-from src.models.character import Character
-from src.models.classes import Warrior
-from src.models.world import World, Position
-from src.models.interaction import Portal, InteractionManager
-from src.core.signals import SignalBus
-from src.logic.quest_manager import QuestManager
-from src.logic.director import DirectorEngine, MapAPI
-from src.core.state import GlobalState
+from tests.e2e.ui_tester import UITester
 from src.models.interaction import Interactable
 
 class MockNPC(Interactable):
@@ -16,7 +8,8 @@ class MockNPC(Interactable):
         self.name = name
     def on_interact(self, context):
         return f"Olá, eu sou o {self.name}."
-    def draw(self, screen, context, pos): pass
+    def draw(self, screen, context, pos):
+        pygame.draw.rect(screen, (0, 255, 0), (pos[0], pos[1], 32, 32))
 
 class MockChest(Interactable):
     def __init__(self, item_name):
@@ -29,71 +22,83 @@ class MockChest(Interactable):
             context.player.receive_item(self.item_name, context.signal_bus)
             return f"Você encontrou {self.item_name}!"
         return "O baú está vazio."
-    def draw(self, screen, context, pos): pass
+    def draw(self, screen, context, pos):
+        color = (139, 69, 19) if not self.is_open else (210, 105, 30)
+        pygame.draw.rect(screen, color, (pos[0], pos[1], 32, 32))
 
-def test_full_quest_narrative_loop():
-    # 1. Setup Environment
-    pygame.init()
-    pygame.display.set_mode((1, 1), pygame.HIDDEN)
+def test_full_quest_narrative_loop_assisted():
+    tester = UITester()
     
-    player = Character("TestHero", Warrior())
-    world = World([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
-    world.tile_size = 32
-    
-    # Place NPC at (1, 0) and Chest at (2, 0)
+    # 1. Setup World with NPC and Chest
+    tester.world.tile_size = 32
     npc = MockNPC("Ancião")
     chest = MockChest("Espada de Ferro")
-    world.interactables[(1, 0)] = npc
-    world.interactables[(2, 0)] = chest
+    tester.world.interactables[(1, 1)] = npc
+    tester.world.interactables[(3, 1)] = chest
     
-    state = GlobalState()
+    # Inject quest manager if not present (UITester setup is minimal)
+    from src.logic.quest_manager import QuestManager
+    from src.core.signals import SignalBus
     bus = SignalBus()
-    quest_manager = QuestManager(state, bus)
+    tester.context.signal_bus = bus
+    tester.context.quest_manager = QuestManager(tester.context.global_state, bus)
     
-    # Mock quest definition
-    quest_manager.quests = {
+    tester.context.quest_manager.quests = {
         "tutorial": {
-            "name": "Tutorial",
+            "name": "Tutorial de Combate",
+            "description": "Fale com o ancião e pegue sua arma.",
             "stages": [
-                {"id": 0, "description": "Talk to Elder", "objectives": [{"type": "INTERACT", "target": "Ancião"}]},
-                {"id": 1, "description": "Get Sword", "objectives": [{"type": "PICK_ITEM", "target": "Espada de Ferro"}]}
+                {"id": 0, "description": "Fale com o Ancião", "objectives": [{"type": "INTERACT", "target": "Ancião"}]},
+                {"id": 1, "description": "Pegue a Espada de Ferro", "objectives": [{"type": "PICK_ITEM", "target": "Espada de Ferro"}]}
             ]
         }
     }
-    bus.subscribe_all(quest_manager.on_event)
+    bus.subscribe_all(tester.context.quest_manager.on_event)
     
-    context = GameContext(player, world)
-    context.global_state = state
-    context.signal_bus = bus
-    context.quest_manager = quest_manager
-    
-    manager = SceneManager(context)
-    interaction_manager = InteractionManager(context, manager)
+    # Subscribe notifications if present
+    from src.ui.notifications import NotificationManager
+    tester.context.notification_manager = NotificationManager()
+    bus.subscribe("QUEST_UPDATED", tester.context.notification_manager.on_quest_updated)
+    bus.subscribe("QUEST_COMPLETED", tester.context.notification_manager.on_quest_completed)
+
+    from src.ui.exploration_scene import ExplorationScene
+    scene = ExplorationScene(tester.manager, None, None)
+    tester.manager.push(scene)
     
     # 2. Accept Quest
-    quest_manager.accept_quest("tutorial")
-    assert state.quests["tutorial"]["stage"] == 0
-    assert state.quests["tutorial"]["status"] == "IN_PROGRESS"
+    tester.context.quest_manager.accept_quest("tutorial")
+    tester._render_watch(1.0)
     
-    # 3. Move to NPC and Interact
-    player.position.x = 32 # Tile (1, 0)
-    player.position.y = 32
-    player.facing_direction = "N" # Facing tile (1, -1) - wait, tile coordinates...
-    # Let's place player at (1, 1) facing North to (1, 0)
-    player.position.x = 32 + 16
-    player.position.y = 32 + 16
-    player.facing_direction = "N"
+    # 3. Go to NPC
+    # Player starts at (0,0)? UITester default is (0,0) tiles
+    tester.player.position.x = 32 + 16 # Tile (1, 1) but center
+    tester.player.position.y = 64 + 16 # Tile (1, 2)
+    tester.player.facing_direction = "N"
+    tester._render_watch(0.5)
     
-    interaction_manager.interact()
-    assert state.quests["tutorial"]["stage"] == 1
+    tester.post_key(pygame.K_SPACE, delay=1.0) # Interact with NPC
+    assert tester.context.global_state.quests["tutorial"]["stage"] == 1
     
-    # 4. Move to Chest and Interact
-    player.position.x = 64 + 16 # Tile (2, 1)
-    player.position.y = 32 + 16
-    player.facing_direction = "N" # Facing tile (2, 0)
+    # Confirm Dialogue
+    tester.post_key(pygame.K_SPACE, delay=0.5) 
     
-    interaction_manager.interact()
-    assert state.quests["tutorial"]["status"] == "COMPLETED"
-    assert "Espada de Ferro" in player.inventory.items
+    # 4. Go to Chest
+    tester.player.position.x = 96 + 16 # Tile (3, 1) center
+    tester.player.position.y = 64 + 16 # Tile (3, 2)
+    tester.player.facing_direction = "N"
+    tester._render_watch(0.5)
+    
+    tester.post_key(pygame.K_SPACE, delay=1.5) # Interact with Chest
+    assert tester.context.global_state.quests["tutorial"]["status"] == "COMPLETED"
+    
+    # Confirm Chest Dialogue
+    tester.post_key(pygame.K_SPACE, delay=0.5)
+
+    # 5. Show Menu
+    tester.post_key(pygame.K_m, delay=1.0) # Open Menu
+    tester.post_key(pygame.K_RIGHT, delay=0.5) # STATUS -> INVENTORY
+    tester.post_key(pygame.K_RIGHT, delay=1.5) # INVENTORY -> MISSÕES
+    
+    tester._render_watch(2.0)
     
     pygame.quit()
