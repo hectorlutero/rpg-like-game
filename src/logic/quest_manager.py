@@ -44,12 +44,20 @@ class QuestManager:
                 continue
                 
             current_stage = stages[current_stage_idx]
-            objectives = current_stage.get("objectives", [])
+            objectives_data = current_stage.get("objectives", [])
+            
+            from src.logic.quest_objectives import EventObjective
+            
+            # Instantiate objectives
+            objectives = []
+            for obj_data in objectives_data:
+                # In the future, we could have an ObjectiveFactory based on obj_data
+                objectives.append(EventObjective(obj_data.get("type"), obj_data.get("target")))
             
             # Check if event matches any objective
             match = False
             for obj in objectives:
-                if obj["type"] == event_data.get("type") and obj["target"] == event_data.get("target"):
+                if obj.is_fulfilled(event_data, state):
                     match = True
                     break
             
