@@ -3,6 +3,7 @@ import os
 import time
 from src.ui.scenes import Scene
 from src.models.interaction import InteractionManager, TransitionRequest
+from src.core.juice import JuiceService
 
 class ExplorationScene(Scene):
     def __init__(self, manager, map_path=None, spawn_tag=None):
@@ -21,6 +22,7 @@ class ExplorationScene(Scene):
         self.interaction_manager = InteractionManager(self.context, self.manager)
         from src.ui.interaction_renderer import InteractionRenderer
         self.interaction_renderer = InteractionRenderer()
+        self.juice = JuiceService()
         
         if map_path and self.context.orchestrator:
             print(f"Loading map: {map_path}")
@@ -94,7 +96,21 @@ class ExplorationScene(Scene):
                 from src.ui.menu_scene import MenuScene
                 self.manager.push(MenuScene(self.manager))
 
+    def _get_input_keys(self):
+        """Safely get input keys."""
+        try:
+            if pygame.display.get_init():
+                return pygame.key.get_pressed()
+        except pygame.error:
+            pass
+        return {}
+
     def update(self, dt):
+        # Juice Update
+        if self.juice.is_hit_stopping():
+            dt = 0
+        self.juice.update(dt)
+
         # Update Notifications
         nm = getattr(self.context, "notification_manager", None)
         if nm:
@@ -116,7 +132,6 @@ class ExplorationScene(Scene):
 
         # Block everything else if fading
         if self.fade_alpha > 0:
-            # Check if reached peak
             if self.fade_alpha == 255 and self.fade_target == 255:
                 self._execute_transition()
             return
@@ -126,15 +141,10 @@ class ExplorationScene(Scene):
             orchestrator = getattr(self.context, "orchestrator", None)
             if orchestrator:
                 orchestrator.update_ai(self.context.world, dt, self.context)
-
-            # Safety check for video system (important for headless tests or watch mode)
-            if not pygame.display.get_init():
-                return
                 
-            try:
-                keys = pygame.key.get_pressed()
-            except pygame.error:
-                return # Skip input processing if system is not ready
+            keys = self._get_input_keys()
+            if not keys:
+                return
 
             dx, dy = 0, 0
             if keys[pygame.K_LEFT] or keys[pygame.K_a]: dx = -self.player_speed
@@ -149,7 +159,6 @@ class ExplorationScene(Scene):
                     self._check_on_step_triggers()
                 else:
                     # Check for Enemy Contact
-                    # Use a small offset in the direction of movement to find the target tile
                     look_x = self.context.player.position.x + (dx * 5)
                     look_y = self.context.player.position.y + (dy * 5)
                     tx = int(look_x // self.context.world.tile_size)
