@@ -65,7 +65,7 @@ def test_world_orchestrator_updates_all_ai():
     class MockAI:
         def __init__(self):
             self.updated = False
-        def update(self, e, w, dt):
+        def update(self, e, w, dt, context=None):
             self.updated = True
             
     npc1.ai = MockAI()

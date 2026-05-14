@@ -33,6 +33,27 @@ class ExplorationScene(Scene):
                     self.context.player.position.x = tx * self.context.world.tile_size + self.context.world.tile_size // 2
                     self.context.player.position.y = ty * self.context.world.tile_size + self.context.world.tile_size // 2
 
+        # Subscribe to AI combat signals
+        sb = getattr(self.context, "signal_bus", None)
+        if sb:
+            sb.subscribe("START_COMBAT", self._on_start_combat_signal)
+
+    def _on_start_combat_signal(self, data):
+        target = data.get("target")
+        from src.models.combat import EnemyInteractable
+        if isinstance(target, EnemyInteractable):
+            self._start_combat(target)
+
+    def _start_combat(self, enemy_interactable):
+        """Transitions to combat scene."""
+        # Ensure we only start combat once (prevent multiple triggers in same frame)
+        if self.manager.active_scene != self:
+            return
+            
+        print(f"Starting combat with {enemy_interactable.name}...")
+        combat_scene = enemy_interactable.on_interact(self.context)
+        self.manager.push(combat_scene)
+
     def handle_event(self, event):
         if self.fade_alpha > 0:
             return
@@ -104,7 +125,7 @@ class ExplorationScene(Scene):
             # Update AI Reasoning
             orchestrator = getattr(self.context, "orchestrator", None)
             if orchestrator:
-                orchestrator.update_ai(self.context.world, dt)
+                orchestrator.update_ai(self.context.world, dt, self.context)
 
             # Safety check for video system (important for headless tests or watch mode)
             if not pygame.display.get_init():
@@ -126,6 +147,18 @@ class ExplorationScene(Scene):
                     self.context.player.position.move(dx, dy)
                     self.context.player.update_orientation(dx, dy)
                     self._check_on_step_triggers()
+                else:
+                    # Check for Enemy Contact
+                    # Use a small offset in the direction of movement to find the target tile
+                    look_x = self.context.player.position.x + (dx * 5)
+                    look_y = self.context.player.position.y + (dy * 5)
+                    tx = int(look_x // self.context.world.tile_size)
+                    ty = int(look_y // self.context.world.tile_size)
+                    
+                    from src.models.combat import EnemyInteractable
+                    target = self.context.world.get_interactable_at(tx, ty)
+                    if isinstance(target, EnemyInteractable):
+                         self._start_combat(target)
 
     def _execute_transition(self):
         """Perform the actual map swap and auto-save at the peak of the fade."""

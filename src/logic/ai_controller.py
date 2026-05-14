@@ -5,11 +5,11 @@ from src.logic.pathfinding import PathfindingEngine
 from src.logic.los import LineOfSight
 
 class AIBehavior:
-    def update(self, entity, world, dt: float):
+    def update(self, entity, world, dt: float, context=None):
         pass
 
 class StaticBehavior(AIBehavior):
-    def update(self, entity, world, dt: float):
+    def update(self, entity, world, dt: float, context=None):
         pass
 
 class RandomWanderBehavior(AIBehavior):
@@ -20,7 +20,7 @@ class RandomWanderBehavior(AIBehavior):
     def _get_random_direction(self) -> Tuple[int, int]:
         return random.choice([(0, 1), (0, -1), (1, 0), (-1, 0)])
 
-    def update(self, entity, world, dt: float):
+    def update(self, entity, world, dt: float, context=None):
         self.timer += dt
         if self.timer >= self.move_interval:
             self.timer = 0.0
@@ -57,7 +57,7 @@ class PursuitBehavior(AIBehavior):
     def _get_grid_pos(self, position, tile_size) -> Tuple[int, int]:
         return int(position.x // tile_size), int(position.y // tile_size)
 
-    def update(self, entity, world, dt: float):
+    def update(self, entity, world, dt: float, context=None):
         if self.spawn_pos is None:
             self.spawn_pos = self._get_grid_pos(entity.position, world.tile_size)
             
@@ -112,11 +112,18 @@ class PursuitBehavior(AIBehavior):
         if self.is_pursuing:
             if self.cached_path:
                 next_step = self.cached_path.pop(0)
+                
+                # Check if next step is the player's tile
+                if (next_step[0], next_step[1]) == (player_tx, player_ty):
+                    if context and context.signal_bus:
+                        context.signal_bus.emit("START_COMBAT", target=entity)
+                    self.cached_path = []
+                    return
+
                 if world.move_interactable(current_tx, current_ty, next_step[0], next_step[1]):
                     entity.position.x = next_step[0] * world.tile_size + (world.tile_size // 2)
                     entity.position.y = next_step[1] * world.tile_size + (world.tile_size // 2)
                 else:
-                    # Blocked, clear path to recalculate next time
                     self.cached_path = []
             else:
                 # No path or reached target, check LoS again
@@ -144,6 +151,6 @@ class AIController:
     def __init__(self, behavior: AIBehavior):
         self.behavior = behavior
 
-    def update(self, entity, world, dt: float):
+    def update(self, entity, world, dt: float, context=None):
         if self.behavior:
-            self.behavior.update(entity, world, dt)
+            self.behavior.update(entity, world, dt, context)

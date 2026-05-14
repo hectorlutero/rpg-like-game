@@ -107,12 +107,16 @@ class Chest(Interactable):
         return self._is_open
 
     def check_open(self, context):
-        """Checks if the chest is open, syncing with context if needed."""
+        """Checks if the chest is open, syncing with global state if needed."""
         if self._is_open:
             return True
-        if context and self.chest_id in context.opened_chests:
-            self._is_open = True
-            return True
+        
+        # Check global state deltas
+        if context and context.global_state and self.chest_id:
+            delta = context.global_state.get_entity_delta(self.chest_id)
+            if delta and delta.get("_is_open"):
+                self._is_open = True
+                return True
         return False
 
     def on_interact(self, context):
