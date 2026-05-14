@@ -14,6 +14,7 @@ class GameContext:
         self.signal_bus = None # Injetado no main
         self.quest_manager = None # Injetado no main
         self.notification_manager = None # Injetado no main
+        self.audio = None # Injetado no main
         
     @property
     def opened_chests(self):
@@ -59,6 +60,11 @@ class SceneManager:
     def __init__(self, context):
         self.context = context
         self.stack = []
+        self.hit_stop_time = 0.0
+
+    def hit_stop(self, duration):
+        """Pauses logic updates for a duration while keeping rendering fluid."""
+        self.hit_stop_time = max(self.hit_stop_time, duration)
 
     def push(self, scene):
         """Adiciona uma nova cena ao topo da pilha."""
@@ -83,6 +89,10 @@ class SceneManager:
             self.active_scene.handle_event(event)
 
     def update(self, dt):
+        if self.hit_stop_time > 0:
+            self.hit_stop_time -= dt
+            dt = 0 # Freeze logic update for scenes
+
         if self.active_scene:
             self.active_scene.update(dt)
 

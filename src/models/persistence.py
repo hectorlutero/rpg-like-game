@@ -45,6 +45,7 @@ class SaveManager:
                 "inventory": player.inventory.items,
                 "equipment": {slot: (item.name if item else None) for slot, item in player.equipment.items()},
                 "global_state": context.global_state.to_dict() if hasattr(context, "global_state") else {},
+                "audio": context.audio.volumes if hasattr(context, "audio") and context.audio else {},
                 "position": {
                     "x": player.position.x,
                     "y": player.position.y

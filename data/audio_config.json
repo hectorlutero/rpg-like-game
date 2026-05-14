@@ -1,0 +1,12 @@
+{
+    "tracks": {
+        "town": "assets/audio/music/town.mp3",
+        "forest": "assets/audio/music/forest.mp3",
+        "battle": "assets/audio/music/battle.mp3"
+    },
+    "sfx": {
+        "hit": "assets/audio/sfx/hit.wav",
+        "coin": "assets/audio/sfx/coin.wav",
+        "menu_select": "assets/audio/sfx/select.wav"
+    }
+}

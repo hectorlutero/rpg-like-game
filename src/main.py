@@ -12,6 +12,7 @@ from src.core.registry import EntityRegistry
 from src.core.orchestrator import WorldOrchestrator
 from src.core.state import GlobalState
 from src.core.signals import SignalBus
+from src.core.audio import SoundManager
 from src.logic.director import DirectorEngine, MapAPI
 from src.logic.quest_manager import QuestManager
 from src.ui.notifications import NotificationManager
@@ -27,6 +28,12 @@ def main():
     save_manager = SaveManager("savegame.json")
     save_data = save_manager.load_game()
     signal_bus = SignalBus()
+    audio = SoundManager("data/audio_config.json")
+    signal_bus.subscribe_all(audio.on_signal)
+    
+    if save_data and 'audio' in save_data:
+        for group, vol in save_data['audio'].items():
+            audio.set_volume(group, vol)
     
     # --- 2. State & Player Init ---
     player = None
@@ -91,6 +98,7 @@ def main():
     context.signal_bus = signal_bus
     context.quest_manager = quest_manager
     context.notification_manager = notification_manager
+    context.audio = audio
     
     api = MapAPI(context)
     director = DirectorEngine(context, api)
