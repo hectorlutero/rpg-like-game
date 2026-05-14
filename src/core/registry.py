@@ -53,11 +53,16 @@ class EntityRegistry:
         # Attach AI if specified in data
         ai_type = data.get("ai_behavior")
         if ai_type:
-            from src.logic.ai_controller import AIController, RandomWanderBehavior, StaticBehavior
+            from src.logic.ai_controller import AIController, RandomWanderBehavior, StaticBehavior, PursuitBehavior
             if ai_type == "random_wander":
                 entity.ai = AIController(RandomWanderBehavior())
             elif ai_type == "static":
                 entity.ai = AIController(StaticBehavior())
+            elif ai_type == "pursuit":
+                # Pursuit needs the player object, which we'll have to inject later or pass in overrides
+                player = overrides.get("player")
+                if player:
+                    entity.ai = AIController(PursuitBehavior(player=player))
                 
         return entity
 

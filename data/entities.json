@@ -21,7 +21,8 @@
       "character_class": "Warrior",
       "level": 1,
       "gold_yield": 30,
-      "xp_yield": 150
+      "xp_yield": 150,
+      "ai_behavior": "pursuit"
     }
   },
   "training_dummy": {

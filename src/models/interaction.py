@@ -31,6 +31,7 @@ class MagicBook(Interactable):
         self.skill_name = skill_name
         self.int_threshold = int_threshold
         self.min_level = min_level
+        self.position = kwargs.get("position")
 
     def on_interact(self, context):
         player = context.player
@@ -72,6 +73,7 @@ class TrainingObject(Interactable):
     def __init__(self, name, attribute_key, **kwargs):
         self.name = name
         self.attribute_key = attribute_key
+        self.position = kwargs.get("position")
 
     def on_interact(self, context):
         player = context.player
@@ -98,6 +100,7 @@ class Chest(Interactable):
         self.chest_id = chest_id # Essential for persistence
         self.custom_msg = custom_msg
         self._is_open = kwargs.get("_is_open", False)
+        self.position = kwargs.get("position")
 
     @property
     def is_open(self):
@@ -150,6 +153,7 @@ class Portal(Interactable):
         self.target_tag = target_tag
         self.require_interaction = require_interaction
         self.name = kwargs.get("name", "Portal")
+        self.position = kwargs.get("position")
 
     def on_interact(self, context):
         """Triggers the transition request."""

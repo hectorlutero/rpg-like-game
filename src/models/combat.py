@@ -16,7 +16,7 @@ class EnemyInteractable(Interactable):
             self.character_class = character_class
             
         self.level = level
-        self.world_pos = world_pos or kwargs.get("position")
+        self.position = world_pos or kwargs.get("position")
         self.gold_yield = gold_yield
         self.xp_yield = xp_yield
         self.loot_table = loot_table or {}
@@ -32,7 +32,7 @@ class EnemyInteractable(Interactable):
                            xp_reward=self.xp_yield, 
                            loot_table=self.loot_table,
                            signal_bus=context.signal_bus)
-        return CombatScene(context.scene_manager, cm, self.world_pos)
+        return CombatScene(context.scene_manager, cm, self.position)
 
     def draw(self, screen, context, pos):
         # Inimigos são quadrados vermelhos

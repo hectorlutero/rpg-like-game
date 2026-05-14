@@ -24,7 +24,7 @@ class ExplorationScene(Scene):
         
         if map_path and self.context.orchestrator:
             print(f"Loading map: {map_path}")
-            self.context.world = self.context.orchestrator.load_map(map_path)
+            self.context.world = self.context.orchestrator.load_map(map_path, player=self.context.player)
             
             # Position player at spawn tag if provided
             if spawn_tag:
@@ -144,7 +144,7 @@ class ExplorationScene(Scene):
             return
 
         # Load map and replace world in context
-        new_world = orchestrator.load_map(f"data/maps/{req.target_map}")
+        new_world = orchestrator.load_map(f"data/maps/{req.target_map}", player=self.context.player)
         if new_world:
             self.context.world = new_world
             

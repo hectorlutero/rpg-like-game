@@ -8,7 +8,7 @@ class WorldOrchestrator:
         self.global_state = global_state
         self.current_tags = {}
 
-    def load_map(self, map_path):
+    def load_map(self, map_path, player=None):
         if not os.path.exists(map_path):
             return None
             
@@ -41,6 +41,10 @@ class WorldOrchestrator:
                 delta = self.global_state.get_entity_delta(unique_id)
                 if delta:
                     overrides.update(delta)
+
+            # Inject player for AI if needed
+            if player:
+                overrides["player"] = player
 
             # Clean overrides to avoid duplicate arguments
             clean_overrides = {k: v for k, v in overrides.items() if k not in ["entity_id", "id"]}
