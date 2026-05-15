@@ -1,0 +1,39 @@
+{
+    "metadata": {
+        "slot": 0,
+        "timestamp": "2026-05-15T02:35:51.537338",
+        "play_time": 0.0,
+        "level": 1,
+        "location": "Unknown"
+    },
+    "data": {
+        "name": "Hero",
+        "class": "Warrior",
+        "level": 1,
+        "hp": 132,
+        "mana": 17,
+        "xp": 0,
+        "energy": 3,
+        "gold": 0,
+        "skills": [],
+        "inventory": [],
+        "difficulty": "Normal",
+        "equipment": {
+            "weapon": null,
+            "shield": null,
+            "armor": null,
+            "accessory": null
+        },
+        "global_state": {
+            "flags": {},
+            "deltas": {},
+            "quests": {}
+        },
+        "audio": {},
+        "position": {
+            "x": 752,
+            "y": 336
+        },
+        "play_time": 0.0
+    }
+}

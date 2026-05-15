@@ -24,16 +24,25 @@ class EnemyInteractable(Interactable):
     def on_interact(self, context):
         from src.ui.combat_scene import CombatScene
         from src.models.character import Character
+
         enemy = Character(self.name, self.character_class, level=self.level)
-        enemy.hp = 30
-        enemy.weakness = "Ice" 
-        cm = CombatManager(context.party, [enemy], 
-                           gold_reward=self.gold_yield, 
-                           xp_reward=self.xp_yield, 
+
+        # Apply difficulty scaling
+        if hasattr(context, 'difficulty_manager'):
+            context.difficulty_manager.apply_scaling(enemy)
+            gold_reward = context.difficulty_manager.scale_rewards(self.gold_yield)
+            xp_reward = context.difficulty_manager.scale_rewards(self.xp_yield)
+        else:
+            gold_reward = self.gold_yield
+            xp_reward = self.xp_yield
+
+        enemy.weakness = "Ice"
+        cm = CombatManager(context.party, [enemy],
+                           gold_reward=gold_reward,
+                           xp_reward=xp_reward,
                            loot_table=self.loot_table,
                            signal_bus=context.signal_bus)
         return CombatScene(context.scene_manager, cm, self.position)
-
     def draw(self, screen, context, pos):
         # Inimigos são quadrados vermelhos
         pygame.draw.rect(screen, (200, 50, 50), (pos[0], pos[1], 32, 32))

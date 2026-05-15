@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 from src.ui.exploration_scene import ExplorationScene
 from src.models.interaction import TransitionRequest
 from src.models.world import Position
+from src.core.inputs import InputManager
 
 # Initialize pygame for Surface and Font support
 pygame.init()
@@ -17,6 +18,7 @@ class MockContext:
         self.save_manager = MagicMock()
         self.orchestrator = MagicMock()
         self.orchestrator.get_tag_position.return_value = (None, None)
+        self.inputs = InputManager()
 
 def test_fade_out_logic():
     manager = MagicMock()

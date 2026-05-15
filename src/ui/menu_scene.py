@@ -42,26 +42,29 @@ class MenuScene(Scene):
 
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
+            inputs = self.context.inputs
             # Sair
-            if event.key in [pygame.K_ESCAPE, pygame.K_m, pygame.K_TAB]:
+            if inputs.is_action_just_pressed(inputs.InputAction.CANCEL, event) or \
+               inputs.is_action_just_pressed(inputs.InputAction.MENU, event):
                 self.manager.pop()
                 return
 
             if self.focus == "TABS":
-                if event.key == pygame.K_LEFT: self.tab_selector.prev()
-                elif event.key == pygame.K_RIGHT: self.tab_selector.next()
-                elif event.key in [pygame.K_DOWN, pygame.K_SPACE, pygame.K_RETURN]:
+                if inputs.is_action_just_pressed(inputs.InputAction.LEFT, event): self.tab_selector.prev()
+                elif inputs.is_action_just_pressed(inputs.InputAction.RIGHT, event): self.tab_selector.next()
+                elif inputs.is_action_just_pressed(inputs.InputAction.DOWN, event) or \
+                     inputs.is_action_just_pressed(inputs.InputAction.CONFIRM, event):
                     if self.tab_selector.current_item == "INVENTÁRIO" and self.player.inventory.items:
                         self.focus = "INVENTORY_NAV"
                     elif self.tab_selector.current_item == "MISSÕES" and self.quest_selector.options:
                         self.focus = "QUEST_NAV"
             
             elif self.focus == "INVENTORY_NAV":
-                if event.key == pygame.K_UP: self.inventory_selector.prev()
-                elif event.key == pygame.K_DOWN: self.inventory_selector.next()
-                elif event.key == pygame.K_BACKSPACE or event.key == pygame.K_LEFT:
+                if inputs.is_action_just_pressed(inputs.InputAction.UP, event): self.inventory_selector.prev()
+                elif inputs.is_action_just_pressed(inputs.InputAction.DOWN, event): self.inventory_selector.next()
+                elif event.key == pygame.K_BACKSPACE or inputs.is_action_just_pressed(inputs.InputAction.LEFT, event):
                     self.focus = "TABS"
-                elif event.key in [pygame.K_SPACE, pygame.K_RETURN]:
+                elif inputs.is_action_just_pressed(inputs.InputAction.CONFIRM, event):
                     # Tenta usar ou equipar o item
                     item_name = self.inventory_selector.current_item
                     success, result_msg = self.player.use_item(item_name)
@@ -73,9 +76,9 @@ class MenuScene(Scene):
                             self.focus = "TABS"
 
             elif self.focus == "QUEST_NAV":
-                if event.key == pygame.K_UP: self.quest_selector.prev()
-                elif event.key == pygame.K_DOWN: self.quest_selector.next()
-                elif event.key == pygame.K_BACKSPACE or event.key == pygame.K_LEFT:
+                if inputs.is_action_just_pressed(inputs.InputAction.UP, event): self.quest_selector.prev()
+                elif inputs.is_action_just_pressed(inputs.InputAction.DOWN, event): self.quest_selector.next()
+                elif event.key == pygame.K_BACKSPACE or inputs.is_action_just_pressed(inputs.InputAction.LEFT, event):
                     self.focus = "TABS"
 
     def update(self, dt):

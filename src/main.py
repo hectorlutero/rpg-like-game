@@ -25,7 +25,7 @@ def main():
     
     # --- 1. System Init ---
     registry = EntityRegistry("data/entities.json")
-    save_manager = SaveManager("savegame.json")
+    save_manager = SaveManager("savegame")
     save_data = save_manager.load_game()
     signal_bus = SignalBus()
     audio = SoundManager("data/audio_config.json")
@@ -66,6 +66,7 @@ def main():
 
         player.position.x = save_data['position']['x']
         player.position.y = save_data['position']['y']
+        initial_play_time = save_data.get('play_time', 0.0)
     else:
         # New Game
         player = Character("Herói", Warrior())
@@ -73,6 +74,7 @@ def main():
         player.gold = 50
         from src.models.items import EQUIPMENT_DATA
         player.equip_item(EQUIPMENT_DATA["Espada de Ferro"])
+        initial_play_time = 0.0
 
     quest_manager = QuestManager(global_state, signal_bus)
     quest_manager.load_quests("data/quests.json")
@@ -99,6 +101,7 @@ def main():
     context.quest_manager = quest_manager
     context.notification_manager = notification_manager
     context.audio = audio
+    context.play_time = initial_play_time
     
     api = MapAPI(context)
     director = DirectorEngine(context, api)
@@ -118,6 +121,7 @@ def main():
     # --- 6. Game Loop ---
     while context.running:
         dt = clock.tick(60) / 1000.0
+        context.play_time += dt
         
         # Events
         for event in pygame.event.get():

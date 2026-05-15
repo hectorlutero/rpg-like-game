@@ -1,0 +1,45 @@
+{
+    "metadata": {
+        "slot": 0,
+        "timestamp": "2026-05-15T02:34:32.118265",
+        "play_time": 0.0,
+        "level": 1,
+        "location": "Unknown"
+    },
+    "data": {
+        "name": "Test",
+        "class": "Warrior",
+        "level": 1,
+        "hp": 132,
+        "mana": 17,
+        "xp": 0,
+        "energy": 3,
+        "gold": 0,
+        "skills": [],
+        "inventory": [],
+        "difficulty": "Normal",
+        "equipment": {
+            "weapon": null,
+            "shield": null,
+            "armor": null,
+            "accessory": null
+        },
+        "global_state": {
+            "flags": {
+                "visited_village": true
+            },
+            "deltas": {
+                "chest_456": {
+                    "_is_open": true
+                }
+            },
+            "quests": {}
+        },
+        "audio": {},
+        "position": {
+            "x": 0,
+            "y": 0
+        },
+        "play_time": 0.0
+    }
+}

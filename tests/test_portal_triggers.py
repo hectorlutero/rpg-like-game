@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 from src.ui.exploration_scene import ExplorationScene
 from src.models.interaction import Portal, InteractionManager, TransitionRequest
 from src.models.world import Position
+from src.core.inputs import InputManager
 
 # Initialize pygame for font support in tests
 pygame.init()
@@ -15,6 +16,7 @@ class MockContext:
         self.player = player
         self.save_manager = MagicMock()
         self.signal_bus = MagicMock()
+        self.inputs = InputManager()
 
 class MockPlayer:
     def __init__(self, x, y):

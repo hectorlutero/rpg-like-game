@@ -68,14 +68,15 @@ class ExplorationScene(Scene):
             return
 
         if event.type == pygame.KEYDOWN:
-            if event.key in [pygame.K_SPACE, pygame.K_e]:
+            inputs = self.context.inputs
+            if inputs.is_action_just_pressed(inputs.InputAction.INTERACT, event):
                 self.interaction_manager.interact()
-            elif event.key == pygame.K_F5:
+            elif inputs.is_action_just_pressed(inputs.InputAction.QUICK_SAVE, event):
                 # Quick Save
                 if self.context.save_manager:
                     self.context.save_manager.save_game(self.context)
                     print("Jogo Salvo!")
-            elif event.key == pygame.K_F9:
+            elif inputs.is_action_just_pressed(inputs.InputAction.QUICK_LOAD, event):
                 # Quick Load
                 if self.context.save_manager:
                     save_data = self.context.save_manager.load_game()
@@ -95,7 +96,7 @@ class ExplorationScene(Scene):
                                 self.context.global_state.set_entity_delta(cid, {"_is_open": True})
 
                         print("Jogo Carregado!")
-            elif event.key in [pygame.K_m, pygame.K_TAB]:
+            elif inputs.is_action_just_pressed(inputs.InputAction.MENU, event):
                 from src.ui.menu_scene import MenuScene
                 self.manager.push(MenuScene(self.manager))
 
@@ -146,15 +147,12 @@ class ExplorationScene(Scene):
             if orchestrator:
                 orchestrator.update_ai(self.context.world, dt, self.context)
                 
-            keys = self._get_input_keys()
-            if not keys:
-                return
-
             dx, dy = 0, 0
-            if keys[pygame.K_LEFT] or keys[pygame.K_a]: dx = -self.player_speed
-            if keys[pygame.K_RIGHT] or keys[pygame.K_d]: dx = self.player_speed
-            if keys[pygame.K_UP] or keys[pygame.K_w]: dy = -self.player_speed
-            if keys[pygame.K_DOWN] or keys[pygame.K_s]: dy = self.player_speed
+            inputs = self.context.inputs
+            if inputs.is_action_pressed(inputs.InputAction.LEFT): dx = -self.player_speed
+            if inputs.is_action_pressed(inputs.InputAction.RIGHT): dx = self.player_speed
+            if inputs.is_action_pressed(inputs.InputAction.UP): dy = -self.player_speed
+            if inputs.is_action_pressed(inputs.InputAction.DOWN): dy = self.player_speed
             
             if dx != 0 or dy != 0:
                 if self.context.world.can_move_to(self.context.player, self.context.player.position.x + dx, self.context.player.position.y + dy):

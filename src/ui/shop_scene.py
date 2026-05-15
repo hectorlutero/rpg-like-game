@@ -28,13 +28,14 @@ class ShopScene(Scene):
 
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
-            if event.key in [pygame.K_ESCAPE, pygame.K_q]:
+            inputs = self.context.inputs
+            if inputs.is_action_just_pressed(inputs.InputAction.CANCEL, event) or event.key == pygame.K_q:
                 self.manager.pop()
-            elif event.key == pygame.K_UP: self.selector.prev()
-            elif event.key == pygame.K_DOWN: self.selector.next()
-            elif event.key == pygame.K_TAB:
+            elif inputs.is_action_just_pressed(inputs.InputAction.UP, event): self.selector.prev()
+            elif inputs.is_action_just_pressed(inputs.InputAction.DOWN, event): self.selector.next()
+            elif inputs.is_action_just_pressed(inputs.InputAction.TOGGLE_MODE, event):
                 self._toggle_mode()
-            elif event.key in [pygame.K_SPACE, pygame.K_RETURN]:
+            elif inputs.is_action_just_pressed(inputs.InputAction.CONFIRM, event):
                 if self.state == "BUY":
                     self._buy_item()
                 else:

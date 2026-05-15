@@ -28,17 +28,18 @@ class CombatScene(Scene):
             if not self.combat_manager.is_waiting_for_input:
                 return
 
-            if event.key == pygame.K_ESCAPE:
+            inputs = self.context.inputs
+            if inputs.is_action_just_pressed(inputs.InputAction.CANCEL, event):
                 if self.state != "MAIN":
                     self.state = "MAIN"
                     self.selector.set_options(self.main_options)
                 return
 
-            if event.key == pygame.K_LEFT: 
+            if inputs.is_action_just_pressed(inputs.InputAction.LEFT, event): 
                 self.selector.prev()
-            elif event.key == pygame.K_RIGHT: 
+            elif inputs.is_action_just_pressed(inputs.InputAction.RIGHT, event): 
                 self.selector.next()
-            elif event.key in [pygame.K_SPACE, pygame.K_RETURN]:
+            elif inputs.is_action_just_pressed(inputs.InputAction.CONFIRM, event):
                 self._confirm_selection()
 
     def _confirm_selection(self):

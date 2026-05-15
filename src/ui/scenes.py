@@ -3,6 +3,8 @@ from src.core.state import GlobalState
 class GameContext:
     """O Estado Global do jogo. Contém os dados que persistem entre cenas."""
     def __init__(self, player, world):
+        from src.logic.difficulty import DifficultyManager
+        from src.core.inputs import InputManager
         self.player = player
         self.world = world
         self.party = [player]
@@ -15,6 +17,9 @@ class GameContext:
         self.quest_manager = None # Injetado no main
         self.notification_manager = None # Injetado no main
         self.audio = None # Injetado no main
+        self.difficulty_manager = DifficultyManager()
+        self.inputs = InputManager()
+        self.play_time = 0.0 # Total time in seconds
         
     @property
     def opened_chests(self):
