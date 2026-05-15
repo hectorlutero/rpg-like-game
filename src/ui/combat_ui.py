@@ -29,11 +29,25 @@ class CombatUI:
             pygame.draw.arc(self.screen, color, rect, -end_angle, -start_angle, 3)
 
     def draw_combat_scene(self, party, enemies, combat_manager):
+        from src.core.assets import AssetManager
+        am = AssetManager()
+        
         # 1. Draw Entities
         # Enemies on the Left
         for i, enemy in enumerate(enemies):
             ex, ey = 150, 150 + (i * 100)
-            pygame.draw.rect(self.screen, (200, 50, 50), (ex - 20, ey - 20, 40, 40))
+            
+            # Determine enemy sprite sheet and ID (defaults if not specified)
+            sheet_id = getattr(enemy, "sprite_sheet_id", "enemies")
+            sprite_id = getattr(enemy, "sprite_id", "enemy_idle")
+            
+            sprite = am.get_sprite(sheet_id, sprite_id)
+            if sprite and sprite is not am._placeholder:
+                rect = sprite.get_rect(center=(ex, ey))
+                self.screen.blit(sprite, rect)
+            else:
+                pygame.draw.rect(self.screen, (200, 50, 50), (ex - 20, ey - 20, 40, 40))
+            
             self.draw_text(enemy.name, ex, ey - 40, color=(255, 100, 100))
             # HP Bar
             self.draw_hp_bar(ex - 30, ey + 30, 60, 8, enemy.hp, enemy.max_hp)
@@ -44,8 +58,17 @@ class CombatUI:
             color = (0, 100, 255)
             if combat_manager.active_entity == hero:
                 color = (255, 255, 255) # Highlight active hero
+            
+            sheet_id = getattr(hero, "sprite_sheet_id", "hero")
+            sprite_id = getattr(hero, "sprite_id", "combat_idle")
+            
+            sprite = am.get_sprite(sheet_id, sprite_id)
+            if sprite and sprite is not am._placeholder:
+                rect = sprite.get_rect(center=(hx, hy))
+                self.screen.blit(sprite, rect)
+            else:
+                pygame.draw.rect(self.screen, color, (hx - 20, hy - 20, 40, 40))
                 
-            pygame.draw.rect(self.screen, color, (hx - 20, hy - 20, 40, 40))
             self.draw_text(hero.name, hx, hy - 40)
             
             # ATB Meter next to hero

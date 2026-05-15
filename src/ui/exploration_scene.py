@@ -232,13 +232,24 @@ class ExplorationScene(Scene):
 
     def _draw_world(self, screen):
         tile_size = self.context.world.tile_size
+        from src.core.assets import AssetManager
+        am = AssetManager()
+        tileset_id = self.context.world.tileset_id
         
         # Optimization: only draw what's on screen
         for y, row in enumerate(self.context.world.grid):
             for x, tile in enumerate(row):
-                color = (30, 30, 30) if tile == 1 else (60, 60, 60)
-                pygame.draw.rect(screen, color, (x*tile_size, y*tile_size, tile_size, tile_size))
-                pygame.draw.rect(screen, (40, 40, 40), (x*tile_size, y*tile_size, tile_size, tile_size), 1)
+                # Try to get tile sprite
+                sprite_id = f"tile_{tile}"
+                sprite = am.get_sprite(tileset_id, sprite_id) if tileset_id else None
+                
+                if sprite and sprite is not am._placeholder:
+                    screen.blit(sprite, (x * tile_size, y * tile_size))
+                else:
+                    # Fallback
+                    color = (30, 30, 30) if tile == 1 else (60, 60, 60)
+                    pygame.draw.rect(screen, color, (x*tile_size, y*tile_size, tile_size, tile_size))
+                    pygame.draw.rect(screen, (40, 40, 40), (x*tile_size, y*tile_size, tile_size, tile_size), 1)
 
         # Draw Interactables
         for (tx, ty), obj in self.context.world.interactables.items():

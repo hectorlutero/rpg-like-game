@@ -34,6 +34,10 @@ class Character:
         self._gold = 0
         self.inventory = Inventory()
         self.status_effects = {} # {status_type: {'duration': X, 'potency': Y}}
+        
+        # Visuals
+        self.sprite_sheet_id = "hero"
+        self.sprite_id = "idle" # Default ID, logic will update based on orientation/animation
 
     @property
     def gold(self):
@@ -243,11 +247,25 @@ class Character:
         self.current_mana = self.get_attribute('mana')
 
     def draw(self, screen, pos):
-        """Draws the character on the map."""
+        """Draws the character on the map with AssetManager support and fallback."""
         import pygame
-        # Basic representation: Blue circle for player
-        pygame.draw.circle(screen, (50, 50, 200), (int(pos[0]), int(pos[1])), 12)
-        # Orientation marker
-        offset_map = {"N": (0, -10), "S": (0, 10), "E": (10, 0), "W": (-10, 0)}
-        ox, oy = offset_map.get(self.facing_direction, (0, 0))
-        pygame.draw.line(screen, (255, 255, 255), pos, (pos[0] + ox, pos[1] + oy), 2)
+        from src.core.assets import AssetManager
+        
+        am = AssetManager()
+        # Map orientation to sprite ID (e.g., hero_N, hero_S, etc.)
+        current_sprite_id = f"{self.sprite_id}_{self.facing_direction}"
+        
+        sprite = am.get_sprite(self.sprite_sheet_id, current_sprite_id)
+        
+        # Check if we got a real sprite (not the placeholder)
+        if sprite and sprite is not am._placeholder:
+            # Draw sprite centered
+            rect = sprite.get_rect(center=(int(pos[0]), int(pos[1])))
+            screen.blit(sprite, rect)
+        else:
+            # Fallback representation: Blue circle for player
+            pygame.draw.circle(screen, (50, 50, 200), (int(pos[0]), int(pos[1])), 12)
+            # Orientation marker
+            offset_map = {"N": (0, -10), "S": (0, 10), "E": (10, 0), "W": (-10, 0)}
+            ox, oy = offset_map.get(self.facing_direction, (0, 0))
+            pygame.draw.line(screen, (255, 255, 255), pos, (pos[0] + ox, pos[1] + oy), 2)
