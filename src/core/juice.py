@@ -1,12 +1,13 @@
 import random
 
 class JuiceService:
-    def __init__(self):
+    def __init__(self, particle_manager=None):
         self.trauma = 0.0
         self.flash_alpha = 0
         self.flash_color = (255, 255, 255)
         self.hit_stop_time = 0.0
         self.camera_offset = [0, 0]
+        self.particles = particle_manager
 
     def shake(self, amount):
         self.trauma = min(1.0, self.trauma + amount)
@@ -17,6 +18,14 @@ class JuiceService:
 
     def hit_stop(self, duration):
         self.hit_stop_time = max(self.hit_stop_time, duration)
+
+    def impact(self, x, y):
+        """Standard impact effect: shake, flash, and hit particles."""
+        self.shake(0.4)
+        self.flash((255, 255, 255), 180)
+        self.hit_stop(0.1)
+        if self.particles:
+            self.particles.emit("hit", x, y, count=12)
 
     def is_hit_stopping(self):
         return self.hit_stop_time > 0

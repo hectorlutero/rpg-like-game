@@ -57,6 +57,8 @@ def test_scene_draw_world_sorting(monkeypatch):
     monkeypatch.setattr(ExplorationScene, "__init__", lambda self, m, p=None, s=None: None)
     scene = ExplorationScene(mock_manager)
     scene.context = mock_context
+    scene.particles = MagicMock()
+    scene.particles.particles = []
     
     # We will record the order of calls to draw
     draw_order = []

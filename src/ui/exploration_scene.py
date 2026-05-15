@@ -1,6 +1,7 @@
 import pygame
 import os
 import time
+import random
 from src.ui.scenes import Scene
 from src.models.interaction import InteractionManager, TransitionRequest
 from src.core.juice import JuiceService
@@ -19,10 +20,12 @@ class ExplorationScene(Scene):
         self.fade_speed = 510 # Alpha per second
         self.pending_transition = None
 
+        from src.core.particles import ParticleManager
+        self.particles = ParticleManager()
         self.interaction_manager = InteractionManager(self.context, self.manager)
         from src.ui.interaction_renderer import InteractionRenderer
         self.interaction_renderer = InteractionRenderer()
-        self.juice = JuiceService()
+        self.juice = JuiceService(self.particles)
         
         if map_path and self.context.orchestrator:
             print(f"Loading map: {map_path}")
@@ -110,6 +113,7 @@ class ExplorationScene(Scene):
         if self.juice.is_hit_stopping():
             dt = 0
         self.juice.update(dt)
+        self.particles.update(dt)
 
         # Update Notifications
         nm = getattr(self.context, "notification_manager", None)
@@ -157,6 +161,10 @@ class ExplorationScene(Scene):
                     self.context.player.position.move(dx, dy)
                     self.context.player.update_orientation(dx, dy)
                     self._check_on_step_triggers()
+                    
+                    # Emit dust particles
+                    if random.random() < 0.3:
+                        self.particles.emit("dust", self.context.player.position.x, self.context.player.position.y + 12)
                 else:
                     # Check for Enemy Contact
                     look_x = self.context.player.position.x + (dx * 5)
@@ -267,6 +275,13 @@ class ExplorationScene(Scene):
             renderables.append({
                 "y": base_y,
                 "draw": lambda s, o=obj, p=(tx * tile_size, ty * tile_size): o.draw(s, self.context, p)
+            })
+
+        # Add Particles
+        for p in self.particles.particles:
+            renderables.append({
+                "y": p.y,
+                "draw": lambda s, part=p: part.draw(s)
             })
 
         # Sort by Y coordinate

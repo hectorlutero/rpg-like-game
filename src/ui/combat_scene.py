@@ -3,6 +3,8 @@ from src.ui.scenes import Scene
 from src.ui.combat_ui import CombatUI
 from src.models.world import Position
 from src.models.interaction import SelectionManager
+from src.core.juice import JuiceService
+from src.core.particles import ParticleManager
 
 class CombatScene(Scene):
     def __init__(self, manager, combat_manager, enemy_world_pos):
@@ -11,6 +13,8 @@ class CombatScene(Scene):
         self.combat_manager = combat_manager
         self.enemy_world_pos = enemy_world_pos 
         self.ui = CombatUI(self.manager.context.screen if hasattr(self.manager.context, 'screen') else None)
+        self.particles = ParticleManager()
+        self.juice = JuiceService(self.particles)
         
         # Gerenciador de Navegação do Combate
         self.main_options = ["Attack", "Skill", "Magic", "Item", "Wait", "Flee"]
@@ -88,13 +92,28 @@ class CombatScene(Scene):
             self.selector.set_options(self.main_options)
 
     def _execute_combat_action(self, action_type, ability_name=None):
+        attacker = self.combat_manager.active_entity
+        target = self.combat_manager.enemies[0] # Simplificação: sempre ataca o primeiro inimigo
+        
+        # Determine position of target for particles
+        if target in self.combat_manager.enemies:
+            idx = self.combat_manager.enemies.index(target)
+            tx, ty = 150, 150 + (idx * 100)
+        else:
+            idx = self.combat_manager.party.index(target)
+            tx, ty = 600, 150 + (idx * 100)
+
         result = self.combat_manager.execute_action(
-            self.combat_manager.active_entity, 
+            attacker, 
             action_type, 
-            self.combat_manager.enemies[0],
+            target,
             ability_name=ability_name
         )
         
+        # Trigger visual impact if it was an attack/skill and successful
+        if action_type in ["Attack", "Skill", "Magic"] and result.get("success"):
+            self.juice.impact(tx, ty)
+
         if result.get("fled"):
             self._handle_flee()
         
@@ -149,11 +168,22 @@ class CombatScene(Scene):
         if self.combat_manager.is_over:
             return
 
+        self.juice.update(dt)
+        self.particles.update(dt)
+
         ready_entity = self.combat_manager.update(dt)
         
         if ready_entity and ready_entity in self.combat_manager.enemies:
+            # Determine target (always party[0] for now in AI)
+            target = self.combat_manager.party[0]
+            idx = self.combat_manager.party.index(target)
+            tx, ty = 600, 150 + (idx * 100)
+            
             # Domain handles AI and paralysis check
             self.combat_manager.handle_enemy_turn(ready_entity)
+            
+            # Trigger impact for enemy attack
+            self.juice.impact(tx, ty)
             
             # Check if enemy action ended the battle (Player death)
             if self.combat_manager.is_over:
@@ -163,9 +193,17 @@ class CombatScene(Scene):
         # Limpa a tela antes de desenhar o combate para não sobrepor o mapa
         screen.fill((20, 20, 20))
         
+        # Apply camera shake from juice
+        shake_x, shake_y = self.juice.camera_offset
+        
+        # Create a surface for combat content to apply shake
+        combat_surface = pygame.Surface(screen.get_size())
+        combat_surface.fill((20, 20, 20))
+        
         # Atualiza a tela na UI se necessário
-        self.ui.screen = screen
+        self.ui.screen = combat_surface
         self.ui.draw_combat_scene(self.combat_manager.party, self.combat_manager.enemies, self.combat_manager)
+        self.particles.draw(combat_surface)
         self.ui.draw_battle_log(self.combat_manager.battle_log)
         if self.combat_manager.is_waiting_for_input:
             menu_title = "Menu Principal"
@@ -173,3 +211,13 @@ class CombatScene(Scene):
             elif self.state == "MAGIC_SELECT": menu_title = "Selecionar Magia"
             
             self.ui.draw_action_menu(self.selector.options, self.selector.index, title=menu_title)
+
+        # Draw combat surface with shake
+        screen.blit(combat_surface, (int(shake_x), int(shake_y)))
+        
+        # Draw flash overlay
+        if self.juice.flash_alpha > 0:
+            flash_surf = pygame.Surface(screen.get_size())
+            flash_surf.set_alpha(self.juice.flash_alpha)
+            flash_surf.fill(self.juice.flash_color)
+            screen.blit(flash_surf, (0, 0))
