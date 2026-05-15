@@ -8,9 +8,10 @@ class Position:
         self.y += dy
 
 class World:
-    def __init__(self, grid, tile_size=32):
+    def __init__(self, grid, tile_size=32, tileset_id=None):
         self.grid = grid # List of lists
         self.tile_size = tile_size
+        self.tileset_id = tileset_id
         self.width = len(grid[0]) if grid else 0
         self.height = len(grid) if grid else 0
         self.interactables = {} # {(tile_x, tile_y): object}

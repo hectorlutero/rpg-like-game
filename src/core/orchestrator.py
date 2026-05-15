@@ -1,12 +1,14 @@
 import json
 import os
 from src.models.world import World
+from src.core.assets import AssetManager
 
 class WorldOrchestrator:
     def __init__(self, registry, global_state=None):
         self.registry = registry
         self.global_state = global_state
         self.current_tags = {}
+        self.asset_manager = AssetManager()
 
     def load_map(self, map_path, player=None):
         if not os.path.exists(map_path):
@@ -15,8 +17,19 @@ class WorldOrchestrator:
         with open(map_path, 'r', encoding='utf-8') as f:
             map_data = json.load(f)
             
+        # Register tileset assets if present
+        tileset_info = map_data.get("tileset")
+        tileset_id = None
+        if tileset_info:
+            tileset_id = tileset_info.get("id")
+            self.asset_manager.register_sheet(
+                tileset_id,
+                tileset_info.get("image"),
+                tileset_info.get("metadata")
+            )
+
         grid = map_data.get("grid", [])
-        world = World(grid)
+        world = World(grid, tileset_id=tileset_id)
         
         self.current_tags = map_data.get("tags", {})
         

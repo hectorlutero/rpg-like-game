@@ -1,0 +1,102 @@
+import json
+import os
+import pygame
+
+class MetadataLoader:
+    def load(self, path: str) -> dict:
+        if not os.path.exists(path):
+            return {}
+        with open(path, 'r', encoding='utf-8') as f:
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                return {}
+
+class AssetManager:
+    _instance = None
+    
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(AssetManager, cls).__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
+
+    def __init__(self):
+        if self._initialized:
+            return
+        self._sheets = {}
+        self._sprite_cache = {}
+        self._loader = MetadataLoader()
+        self._placeholder = self._create_placeholder()
+        self._initialized = True
+
+    def _create_placeholder(self):
+        surf = pygame.Surface((32, 32))
+        surf.fill((255, 0, 255)) # Magenta placeholder
+        pygame.draw.rect(surf, (0, 0, 0), (0, 0, 16, 16))
+        pygame.draw.rect(surf, (0, 0, 0), (16, 16, 16, 16))
+        return surf
+
+    def register_sheet(self, sheet_id: str, image_path: str, meta_path: str):
+        """Registers a SpriteSheet and its metadata for lazy loading."""
+        self._sheets[sheet_id] = {
+            "image_path": image_path,
+            "meta_path": meta_path,
+            "surface": None,
+            "metadata": None
+        }
+
+    def _ensure_sheet_loaded(self, sheet_id: str):
+        if sheet_id not in self._sheets:
+            return False
+        
+        sheet = self._sheets[sheet_id]
+        if sheet["surface"] is None:
+            try:
+                sheet["surface"] = pygame.image.load(sheet["image_path"]).convert_alpha()
+            except (pygame.error, FileNotFoundError):
+                sheet["surface"] = self._placeholder
+                
+        if sheet["metadata"] is None:
+            sheet["metadata"] = self._loader.load(sheet["meta_path"])
+            
+        return True
+
+    def get_sprite(self, sheet_id: str, sprite_id: str) -> pygame.Surface:
+        """Lazily slices and returns a sprite from the specified sheet."""
+        cache_key = f"{sheet_id}:{sprite_id}"
+        if cache_key in self._sprite_cache:
+            return self._sprite_cache[cache_key]
+        
+        if not self._ensure_sheet_loaded(sheet_id):
+            return self._placeholder
+            
+        sheet = self._sheets[sheet_id]
+        metadata = sheet["metadata"]
+        
+        if not metadata or "sprites" not in metadata or sprite_id not in metadata["sprites"]:
+            return self._placeholder
+            
+        data = metadata["sprites"][sprite_id]
+        rect = pygame.Rect(data["x"], data["y"], data["w"], data["h"])
+        
+        # Slicing
+        sprite = pygame.Surface(rect.size, pygame.SRCALPHA)
+        sprite.blit(sheet["surface"], (0, 0), rect)
+        
+        self._sprite_cache[cache_key] = sprite
+        return sprite
+
+    def get_animation(self, sheet_id: str, anim_id: str) -> list:
+        """Returns a list of frames for a given animation ID."""
+        if not self._ensure_sheet_loaded(sheet_id):
+            return [self._placeholder]
+            
+        sheet = self._sheets[sheet_id]
+        metadata = sheet["metadata"]
+        
+        if not metadata or "animations" not in metadata or anim_id not in metadata["animations"]:
+            return [self._placeholder]
+            
+        frame_ids = metadata["animations"][anim_id]
+        return [self.get_sprite(sheet_id, fid) for fid in frame_ids]

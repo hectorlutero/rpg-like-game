@@ -8,6 +8,9 @@
 - **Proficiência**: Class-based effectiveness bonuses for equipment.
 - **Defesa Absoluta**: Subtractive reduction for physical damage.
 - **Defesa Relativa**: Percentage-based reduction for magic/skills.
+- **Y-Sorting**: Dynamic rendering order where entities with higher Y-coordinate are drawn over those with lower Y.
+- **Eager Asset Loading**: Maps pre-load all required sprites (Tilesets & Character Sheets) during scene transitions.
+- **Sprite Metadata**: JSON-based definition for sprite dimensions and animation frames to allow flexible entity sizes.
 
 ## System Overview
 
