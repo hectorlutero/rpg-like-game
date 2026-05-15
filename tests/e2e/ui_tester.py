@@ -25,6 +25,7 @@ class UITester:
         self.player = Character("Tester", Warrior())
         self.context = GameContext(self.player, self.world)
         self.manager = SceneManager(self.context)
+        self.context.scene_manager = self.manager
         self.watch = WATCH_MODE
         
         # Initial draw
