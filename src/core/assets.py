@@ -87,6 +87,34 @@ class AssetManager:
         self._sprite_cache[cache_key] = sprite
         return sprite
 
+    def get_hitbox_data(self, sheet_id: str, sprite_id: str) -> list:
+        """Returns [offset_x, offset_y, w, h] for a given sprite, or defaults."""
+        if not self._ensure_sheet_loaded(sheet_id):
+            return [0, 16, 32, 16] # Default: bottom half
+            
+        sheet = self._sheets[sheet_id]
+        metadata = sheet["metadata"]
+        
+        if not metadata or "sprites" not in metadata or sprite_id not in metadata["sprites"]:
+            return [0, 16, 32, 16]
+            
+        data = metadata["sprites"][sprite_id]
+        return data.get("hitbox", [0, 16, 32, 16])
+
+    def get_sprite_size(self, sheet_id: str, sprite_id: str) -> tuple:
+        """Returns (w, h) for a given sprite, or (32, 32) if not found."""
+        if not self._ensure_sheet_loaded(sheet_id):
+            return (32, 32)
+            
+        sheet = self._sheets[sheet_id]
+        metadata = sheet["metadata"]
+        
+        if not metadata or "sprites" not in metadata or sprite_id not in metadata["sprites"]:
+            return (32, 32)
+            
+        data = metadata["sprites"][sprite_id]
+        return (data.get("w", 32), data.get("h", 32))
+
     def get_animation(self, sheet_id: str, anim_id: str) -> list:
         """Returns a list of frames for a given animation ID."""
         if not self._ensure_sheet_loaded(sheet_id):

@@ -1,3 +1,4 @@
+import pygame
 from src.models.world import Position
 from src.models.persistence import Inventory
 from src.models.stats import Stat, Modifier, ModifierType
@@ -60,6 +61,28 @@ class Character:
         self.energy = 3
         self.hp = self.max_hp
         self.mana = self.max_mana
+
+    def get_hitbox(self, position=None):
+        """Returns the world-space hitbox Rect for the character at its current or a given position."""
+        from src.core.assets import AssetManager
+        am = AssetManager()
+        
+        # Use provided position or current position
+        pos = position if position is not None else self.position
+        
+        # Get offsets [ox, oy, w, h]
+        current_sprite_id = f"{self.sprite_id}_{self.facing_direction}"
+        offsets = am.get_hitbox_data(self.sprite_sheet_id, current_sprite_id)
+        ox, oy, w, h = offsets
+        
+        # Get actual sprite size for proper centering
+        sw, sh = am.get_sprite_size(self.sprite_sheet_id, current_sprite_id)
+        
+        # Calculate top-left of the sprite area (assuming position is center)
+        tl_x = pos.x - (sw // 2)
+        tl_y = pos.y - (sh // 2)
+        
+        return pygame.Rect(tl_x + ox, tl_y + oy, w, h)
 
     def update_orientation(self, dx, dy):
         """Updates facing direction based on movement vector."""

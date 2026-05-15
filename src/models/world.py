@@ -1,3 +1,5 @@
+import pygame
+
 class Position:
     def __init__(self, x=0, y=0):
         self.x = x
@@ -55,34 +57,67 @@ class World:
         ty = int(py // self.tile_size)
         return self.get_interactable_at(tx, ty)
 
+    def is_collision(self, rect, ignore_entity=None):
+        """Checks if a Rect overlaps solid tiles or is out of bounds."""
+        # 1. Bounds check
+        if rect.left < 0 or rect.right > self.width * self.tile_size or \
+           rect.top < 0 or rect.bottom > self.height * self.tile_size:
+            return True
+
+        # 2. Tile check
+        # Get range of tiles covered by the rect
+        start_x = int(rect.left // self.tile_size)
+        end_x = int((rect.right - 1) // self.tile_size)
+        start_y = int(rect.top // self.tile_size)
+        end_y = int((rect.bottom - 1) // self.tile_size)
+
+        for ty in range(start_y, end_y + 1):
+            for tx in range(start_x, end_x + 1):
+                if self.grid[ty][tx] == 1:
+                    return True
+
+        # 3. Entity check
+        for obj in self.interactables.values():
+            if obj == ignore_entity:
+                continue
+            
+            # Check if object has a hitbox
+            if hasattr(obj, "get_hitbox"):
+                obj_hitbox = obj.get_hitbox()
+                if rect.colliderect(obj_hitbox):
+                    return True
+            else:
+                # Fallback to tile-based collision if no hitbox method (legacy/simple objects)
+                # This part is optional but keeps backward compatibility
+                pass
+
+        return False
+
     def can_move_to(self, entity, target_x, target_y):
-        # A entidade tem 32x32 e o centro é (target_x, target_y)
-        # Vamos checar os 4 cantos da caixa de colisão.
-        # Usamos uma pequena margem (2px) para a colisão não ser "travada" demais.
-        half = self.tile_size // 2
-        margin = 2
+        """
+        Checks if the entity can move to the target center position (pixel-based).
+        Uses hitboxes for high precision.
+        """
+        # Create a temporary Position object for calculation
+        target_pos = Position(target_x, target_y)
         
-        corners = [
-            (target_x - half + margin, target_y - half + margin), # Top-Left
-            (target_x + half - margin, target_y - half + margin), # Top-Right
-            (target_x - half + margin, target_y + half - margin), # Bottom-Left
-            (target_x + half - margin, target_y + half - margin)  # Bottom-Right
-        ]
+        # Get the hitbox the entity would have at that position
+        if hasattr(entity, "get_hitbox"):
+            try:
+                rect = entity.get_hitbox(position=target_pos)
+            except TypeError:
+                # Fallback if get_hitbox doesn't accept position argument yet
+                rect = entity.get_hitbox()
+                # Manually adjust rect for target position if it's not the same
+                # (This is a safety fallback)
+                pass
+        else:
+            # Legacy fallback: full tile centered at target
+            half = self.tile_size // 2
+            margin = 2
+            rect = pygame.Rect(target_x - half + margin, target_y - half + margin, 
+                               self.tile_size - 2*margin, self.tile_size - 2*margin)
 
-        for cx, cy in corners:
-            grid_x = int(cx // self.tile_size)
-            grid_y = int(cy // self.tile_size)
-
-            # Check bounds
-            if grid_x < 0 or grid_x >= self.width or grid_y < 0 or grid_y >= self.height:
-                return False
-
-            # Check if tile is solid (1 = solid)
-            if self.grid[grid_y][grid_x] == 1:
-                return False
-
-            # Check for interactables (NPCs, Enemies, etc.)
-            if (grid_x, grid_y) in self.interactables:
-                return False
-
-        return True
+        # Check for collision in the world (solid tiles + other entities)
+        # We ignore the entity itself
+        return not self.is_collision(rect, ignore_entity=entity)

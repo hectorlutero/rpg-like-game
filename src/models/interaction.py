@@ -19,6 +19,31 @@ class Interactable:
         # Default fallback: um quadrado cinza
         pygame.draw.rect(screen, (150, 150, 150), (pos[0], pos[1], 32, 32))
 
+    def get_hitbox(self):
+        """Returns the world-space hitbox Rect for the object."""
+        # Use sprite metadata if available (via AssetManager)
+        if hasattr(self, "position") and self.position:
+            px, py = self.position.x, self.position.y
+            
+            # If we have sprite info, use AssetManager
+            if hasattr(self, "sprite_sheet_id") and hasattr(self, "sprite_id"):
+                from src.core.assets import AssetManager
+                am = AssetManager()
+                
+                # Fetch size and hitbox offsets
+                sw, sh = am.get_sprite_size(self.sprite_sheet_id, self.sprite_id)
+                offsets = am.get_hitbox_data(self.sprite_sheet_id, self.sprite_id)
+                ox, oy, w, h = offsets
+                
+                # Assumindo que self.position é o CENTRO para entidades que usam sprites
+                tl_x = px - (sw // 2)
+                tl_y = py - (sh // 2)
+                return pygame.Rect(tl_x + ox, tl_y + oy, w, h)
+            
+            # Fallback for simple/grid objects: assume position is top-left
+            return pygame.Rect(px, py, 32, 32)
+        return pygame.Rect(0, 0, 0, 0)
+
 class TransitionRequest:
     """Dados para solicitar uma troca de mapa."""
     def __init__(self, target_map, target_tag):
