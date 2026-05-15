@@ -251,12 +251,30 @@ class ExplorationScene(Scene):
                     pygame.draw.rect(screen, color, (x*tile_size, y*tile_size, tile_size, tile_size))
                     pygame.draw.rect(screen, (40, 40, 40), (x*tile_size, y*tile_size, tile_size, tile_size), 1)
 
-        # Draw Interactables
-        for (tx, ty), obj in self.context.world.interactables.items():
-            obj.draw(screen, self.context, (tx * tile_size, ty * tile_size))
+        # Collect all renderables for Y-sorting
+        renderables = []
+        
+        # Add Player (using feet as Y, which is just the position.y since it's centered)
+        renderables.append({
+            "y": self.context.player.position.y,
+            "draw": lambda s: self.context.player.draw(s, (self.context.player.position.x, self.context.player.position.y))
+        })
 
-        # Draw Player
-        self.context.player.draw(screen, (self.context.player.position.x, self.context.player.position.y))
+        # Add Interactables
+        for (tx, ty), obj in self.context.world.interactables.items():
+            # Use tile base as Y
+            base_y = ty * tile_size + (tile_size // 2)
+            renderables.append({
+                "y": base_y,
+                "draw": lambda s, o=obj, p=(tx * tile_size, ty * tile_size): o.draw(s, self.context, p)
+            })
+
+        # Sort by Y coordinate
+        renderables.sort(key=lambda r: r["y"])
+
+        # Draw in order
+        for r in renderables:
+            r["draw"](screen)
 
     def _check_on_step_triggers(self):
         """Checks for non-interactive triggers like portals under player's feet."""

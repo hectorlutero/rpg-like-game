@@ -32,53 +32,71 @@ class CombatUI:
         from src.core.assets import AssetManager
         am = AssetManager()
         
-        # 1. Draw Entities
-        # Enemies on the Left
+        # 1. Collect and Sort Entities for Y-Sorting
+        renderables = []
+        
+        # Enemies
         for i, enemy in enumerate(enemies):
             ex, ey = 150, 150 + (i * 100)
+            renderables.append({
+                "y": ey,
+                "type": "enemy",
+                "obj": enemy,
+                "pos": (ex, ey)
+            })
             
-            # Determine enemy sprite sheet and ID (defaults if not specified)
-            sheet_id = getattr(enemy, "sprite_sheet_id", "enemies")
-            sprite_id = getattr(enemy, "sprite_id", "enemy_idle")
+        # Heroes
+        for i, hero in enumerate(party):
+            hx, hy = 600, 150 + (i * 100)
+            renderables.append({
+                "y": hy,
+                "type": "hero",
+                "obj": hero,
+                "pos": (hx, hy)
+            })
             
+        # Sort by Y
+        renderables.sort(key=lambda r: r["y"])
+        
+        # 2. Draw Entities
+        for r in renderables:
+            ex, ey = r["pos"]
+            obj = r["obj"]
+            
+            if r["type"] == "enemy":
+                sheet_id = getattr(obj, "sprite_sheet_id", "enemies")
+                sprite_id = getattr(obj, "sprite_id", "enemy_idle")
+                color = (200, 50, 50)
+            else:
+                sheet_id = getattr(obj, "sprite_sheet_id", "hero")
+                sprite_id = getattr(obj, "sprite_id", "combat_idle")
+                color = (0, 100, 255)
+                if combat_manager.active_entity == obj:
+                    color = (255, 255, 255)
+
             sprite = am.get_sprite(sheet_id, sprite_id)
             if sprite and sprite is not am._placeholder:
                 rect = sprite.get_rect(center=(ex, ey))
                 self.screen.blit(sprite, rect)
             else:
-                pygame.draw.rect(self.screen, (200, 50, 50), (ex - 20, ey - 20, 40, 40))
-            
-            self.draw_text(enemy.name, ex, ey - 40, color=(255, 100, 100))
-            # HP Bar
-            self.draw_hp_bar(ex - 30, ey + 30, 60, 8, enemy.hp, enemy.max_hp)
+                pygame.draw.rect(self.screen, color, (ex - 20, ey - 20, 40, 40))
 
-        # Heroes on the Right
-        for i, hero in enumerate(party):
-            hx, hy = 600, 150 + (i * 100)
-            color = (0, 100, 255)
-            if combat_manager.active_entity == hero:
-                color = (255, 255, 255) # Highlight active hero
+        # 3. Draw UI Overlays (Names, HP bars, ATB)
+        for r in renderables:
+            ex, ey = r["pos"]
+            obj = r["obj"]
             
-            sheet_id = getattr(hero, "sprite_sheet_id", "hero")
-            sprite_id = getattr(hero, "sprite_id", "combat_idle")
-            
-            sprite = am.get_sprite(sheet_id, sprite_id)
-            if sprite and sprite is not am._placeholder:
-                rect = sprite.get_rect(center=(hx, hy))
-                self.screen.blit(sprite, rect)
+            if r["type"] == "enemy":
+                self.draw_text(obj.name, ex, ey - 40, color=(255, 100, 100))
+                self.draw_hp_bar(ex - 30, ey + 30, 60, 8, obj.hp, obj.max_hp)
             else:
-                pygame.draw.rect(self.screen, color, (hx - 20, hy - 20, 40, 40))
-                
-            self.draw_text(hero.name, hx, hy - 40)
-            
-            # ATB Meter next to hero
-            atb_pc = combat_manager.get_atb_percentage(hero)
-            self.draw_circular_meter(hx + 50, hy, 15, atb_pc)
-            
-            # HP Bar
-            self.draw_hp_bar(hx - 30, hy + 30, 60, 8, hero.hp, hero.max_hp)
-            # Mana Bar
-            self.draw_resource_bar(hx - 30, hy + 42, 60, 6, hero.mana, hero.max_mana, color=(0, 100, 255))
+                self.draw_text(obj.name, ex, ey - 40)
+                # ATB Meter next to hero
+                atb_pc = combat_manager.get_atb_percentage(obj)
+                self.draw_circular_meter(ex + 50, ey, 15, atb_pc)
+                # Bars
+                self.draw_hp_bar(ex - 30, ey + 30, 60, 8, obj.hp, obj.max_hp)
+                self.draw_resource_bar(ex - 30, ey + 42, 60, 6, obj.mana, obj.max_mana, color=(0, 100, 255))
 
     def draw_hp_bar(self, x, y, w, h, current, maximum):
         self.draw_resource_bar(x, y, w, h, current, maximum, color=(0, 200, 0))
