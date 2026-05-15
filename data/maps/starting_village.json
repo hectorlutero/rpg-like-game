@@ -69,6 +69,16 @@
         "target_tag": "village_entrance",
         "require_interaction": false
       }
+    },
+    {
+      "id": "portal",
+      "x": 0,
+      "y": 10,
+      "overrides": {
+        "target_map": "debug_room.json",
+        "target_tag": "debug_spawn",
+        "require_interaction": false
+      }
     }
   ],
   "tags": {
