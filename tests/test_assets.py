@@ -114,3 +114,24 @@ def test_asset_manager_get_animation(tmp_path, monkeypatch):
     assert len(frames) == 2
     assert frames[0].get_width() == 16
     assert frames[1].get_width() == 16
+
+def test_asset_manager_get_animation_duration(tmp_path, monkeypatch):
+    metadata = {
+        "animations": {
+            "walk": ["f1", "f2"],
+            "walk_duration": 150
+        }
+    }
+    meta_path = tmp_path / "duration.json"
+    meta_path.write_text(json.dumps(metadata))
+    
+    monkeypatch.setattr(pygame.image, "load", lambda p: pygame.Surface((32, 16)))
+    
+    am = AssetManager()
+    am._sheets = {}
+    am.register_sheet("dur_test", "path.png", str(meta_path))
+    
+    # Specified duration
+    assert am.get_animation_duration("dur_test", "walk") == 150
+    # Default duration
+    assert am.get_animation_duration("dur_test", "non_existent") == 100

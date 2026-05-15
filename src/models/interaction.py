@@ -1,7 +1,21 @@
 import pygame
+from src.models.base import AnimationMixin
 
-class Interactable:
+class Interactable(AnimationMixin):
     """Interface base para qualquer objeto que possa ser ativado pelo Herói."""
+    def __init__(self, **kwargs):
+        self.position = kwargs.get("position")
+        self.name = kwargs.get("name", "Mundo")
+        self.sprite_sheet_id = kwargs.get("sprite_sheet_id")
+        self.state = kwargs.get("state", "idle")
+        self.frame_index = 0
+        self.animation_timer = 0
+
+    def update(self, dt):
+        """Atualiza estado de animação se possuir sprite sheet."""
+        if self.sprite_sheet_id:
+            self.update_animation(dt)
+
     def on_interact(self, context):
         """
         Executa a ação de interação.
@@ -16,8 +30,28 @@ class Interactable:
         :param context: GameContext (pode ser necessário para estado).
         :param pos: Tupla (x, y) em pixels.
         """
+        if self.sprite_sheet_id:
+            from src.core.assets import AssetManager
+            am = AssetManager()
+            
+            # Get facing_direction if it exists, else use state as is
+            facing = getattr(self, "facing_direction", None)
+            anim_id = f"{self.state}_{facing}" if facing else self.state
+            
+            frames = am.get_animation(self.sprite_sheet_id, anim_id)
+            
+            sprite = None
+            if frames and len(frames) > self.frame_index:
+                sprite = frames[self.frame_index]
+            
+            if sprite and sprite is not am._placeholder:
+                # Draw sprite centered
+                rect = sprite.get_rect(center=(int(pos[0]), int(pos[1])))
+                screen.blit(sprite, rect)
+                return
+
         # Default fallback: um quadrado cinza
-        pygame.draw.rect(screen, (150, 150, 150), (pos[0], pos[1], 32, 32))
+        pygame.draw.rect(screen, (150, 150, 150), (pos[0] - 16, pos[1] - 16, 32, 32))
 
     def get_hitbox(self):
         """Returns the world-space hitbox Rect for the object."""
@@ -26,13 +60,17 @@ class Interactable:
             px, py = self.position.x, self.position.y
             
             # If we have sprite info, use AssetManager
-            if hasattr(self, "sprite_sheet_id") and hasattr(self, "sprite_id"):
+            if hasattr(self, "sprite_sheet_id") and self.sprite_sheet_id:
                 from src.core.assets import AssetManager
                 am = AssetManager()
                 
+                # Resolve anim ID
+                facing = getattr(self, "facing_direction", None)
+                anim_id = f"{self.state}_{facing}" if facing else self.state
+                
                 # Fetch size and hitbox offsets
-                sw, sh = am.get_sprite_size(self.sprite_sheet_id, self.sprite_id)
-                offsets = am.get_hitbox_data(self.sprite_sheet_id, self.sprite_id)
+                sw, sh = am.get_sprite_size(self.sprite_sheet_id, anim_id)
+                offsets = am.get_hitbox_data(self.sprite_sheet_id, anim_id)
                 ox, oy, w, h = offsets
                 
                 # Assumindo que self.position é o CENTRO para entidades que usam sprites
@@ -53,10 +91,10 @@ class TransitionRequest:
 
 class MagicBook(Interactable):
     def __init__(self, skill_name, int_threshold, min_level=1, **kwargs):
+        super().__init__(**kwargs)
         self.skill_name = skill_name
         self.int_threshold = int_threshold
         self.min_level = min_level
-        self.position = kwargs.get("position")
 
     def on_interact(self, context):
         player = context.player
@@ -96,9 +134,8 @@ class MagicBook(Interactable):
 
 class TrainingObject(Interactable):
     def __init__(self, name, attribute_key, **kwargs):
-        self.name = name
+        super().__init__(**kwargs)
         self.attribute_key = attribute_key
-        self.position = kwargs.get("position")
 
     def on_interact(self, context):
         player = context.player
@@ -120,12 +157,12 @@ class TrainingObject(Interactable):
 
 class Chest(Interactable):
     def __init__(self, items=None, gold=0, chest_id=None, custom_msg=None, **kwargs):
+        super().__init__(**kwargs)
         self.items = items or [] # List of Item names or objects
         self.gold = gold
         self.chest_id = chest_id # Essential for persistence
         self.custom_msg = custom_msg
         self._is_open = kwargs.get("_is_open", False)
-        self.position = kwargs.get("position")
 
     @property
     def is_open(self):
@@ -178,11 +215,10 @@ class Chest(Interactable):
 
 class Portal(Interactable):
     def __init__(self, target_map, target_tag, require_interaction=False, **kwargs):
+        super().__init__(**kwargs)
         self.target_map = target_map
         self.target_tag = target_tag
         self.require_interaction = require_interaction
-        self.name = kwargs.get("name", "Portal")
-        self.position = kwargs.get("position")
 
     def on_interact(self, context):
         """Triggers the transition request."""

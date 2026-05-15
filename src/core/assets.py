@@ -128,3 +128,18 @@ class AssetManager:
             
         frame_ids = metadata["animations"][anim_id]
         return [self.get_sprite(sheet_id, fid) for fid in frame_ids]
+
+    def get_animation_duration(self, sheet_id: str, anim_id: str) -> int:
+        """Returns the frame duration for an animation in ms, defaults to 100."""
+        if not self._ensure_sheet_loaded(sheet_id):
+            return 100
+            
+        sheet = self._sheets[sheet_id]
+        metadata = sheet["metadata"]
+        
+        if not metadata or "animations" not in metadata:
+            return 100
+            
+        # Try to find specific duration in metadata, else default
+        duration_key = f"{anim_id}_duration"
+        return metadata["animations"].get(duration_key, 100)

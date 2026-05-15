@@ -2,8 +2,9 @@ import pygame
 from src.models.world import Position
 from src.models.persistence import Inventory
 from src.models.stats import Stat, Modifier, ModifierType
+from src.models.base import AnimationMixin
 
-class Character:
+class Character(AnimationMixin):
     def __init__(self, name, character_class, base_stats=None, level=1):
         self.name = name
         self.character_class = character_class
@@ -37,8 +38,8 @@ class Character:
         self.status_effects = {} # {status_type: {'duration': X, 'potency': Y}}
         
         # Visuals
-        self.sprite_sheet_id = "hero"
-        self.sprite_id = "idle" # Default ID, logic will update based on orientation/animation
+        self.init_animation("hero", "idle")
+        self.last_position = Position(self.position.x, self.position.y)
 
     @property
     def gold(self):
@@ -56,6 +57,23 @@ class Character:
     def energy(self, value):
         self._energy = max(0, min(value, 3))
 
+    def update(self, dt):
+        """Updates character state, including animation timers."""
+        # Detect movement to update state
+        if self.position.x != self.last_position.x or self.position.y != self.last_position.y:
+            if self.state == "idle":
+                self.state = "walk"
+                self.frame_index = 0
+                self.animation_timer = 0
+        else:
+            if self.state == "walk":
+                self.state = "idle"
+                self.frame_index = 0
+                self.animation_timer = 0
+        
+        self.last_position = Position(self.position.x, self.position.y)
+        self.update_animation(dt)
+
     def rest(self):
         """Replenishes energy, HP, and Mana to max."""
         self.energy = 3
@@ -71,7 +89,7 @@ class Character:
         pos = position if position is not None else self.position
         
         # Get offsets [ox, oy, w, h]
-        current_sprite_id = f"{self.sprite_id}_{self.facing_direction}"
+        current_sprite_id = f"{self.state}_{self.facing_direction}"
         offsets = am.get_hitbox_data(self.sprite_sheet_id, current_sprite_id)
         ox, oy, w, h = offsets
         
@@ -275,17 +293,22 @@ class Character:
         from src.core.assets import AssetManager
         
         am = AssetManager()
-        # Map orientation to sprite ID (e.g., hero_N, hero_S, etc.)
-        current_sprite_id = f"{self.sprite_id}_{self.facing_direction}"
+        # Resolve animation ID
+        anim_id = f"{self.state}_{self.facing_direction}"
         
-        sprite = am.get_sprite(self.sprite_sheet_id, current_sprite_id)
+        frames = am.get_animation(self.sprite_sheet_id, anim_id)
         
-        # Check if we got a real sprite (not the placeholder)
+        sprite = None
+        if frames and len(frames) > self.frame_index:
+            sprite = frames[self.frame_index]
+        
+        # Check if we got a real sprite (not the placeholder and not None)
         if sprite and sprite is not am._placeholder:
             # Draw sprite centered
             rect = sprite.get_rect(center=(int(pos[0]), int(pos[1])))
             screen.blit(sprite, rect)
         else:
+            # Fallback representation: Blue circle for player
             # Fallback representation: Blue circle for player
             pygame.draw.circle(screen, (50, 50, 200), (int(pos[0]), int(pos[1])), 12)
             # Orientation marker
