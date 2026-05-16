@@ -21,15 +21,12 @@ class WorldOrchestrator:
         tileset_info = map_data.get("tileset")
         tileset_id = None
         if tileset_info:
-            if isinstance(tileset_info, dict):
-                tileset_id = tileset_info.get("id")
-                self.asset_manager.register_sheet(
-                    tileset_id,
-                    tileset_info.get("image"),
-                    tileset_info.get("metadata")
-                )
-            else:
-                tileset_id = tileset_info
+            tileset_id = tileset_info.get("id")
+            self.asset_manager.register_sheet(
+                tileset_id,
+                tileset_info.get("image"),
+                tileset_info.get("metadata")
+            )
 
         grid = map_data.get("grid", [])
         world = World(grid, tileset_id=tileset_id)
