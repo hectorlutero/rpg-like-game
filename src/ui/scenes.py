@@ -18,6 +18,7 @@ class GameContext:
         self.quest_manager = None # Injetado no main
         self.notification_manager = None # Injetado no main
         self.audio = None # Injetado no main
+        self.socket_client = None # Injetado no main
         self.difficulty_manager = DifficultyManager()
         self.inputs = InputManager()
         self.play_time = 0.0 # Total time in seconds

@@ -15,6 +15,7 @@ from src.core.signals import SignalBus
 from src.core.audio import SoundManager
 from src.logic.director import DirectorEngine, MapAPI
 from src.logic.quest_manager import QuestManager
+from src.core.network import SocketClient
 from src.ui.notifications import NotificationManager
 
 def main():
@@ -24,6 +25,9 @@ def main():
     clock = pygame.time.Clock()
     
     # --- 1. System Init ---
+    socket_client = SocketClient()
+    socket_client.start()
+    
     registry = EntityRegistry("data/entities.json")
     save_manager = SaveManager("savegame")
     signal_bus = SignalBus()
@@ -63,6 +67,7 @@ def main():
     context.quest_manager = quest_manager
     context.notification_manager = notification_manager
     context.audio = audio
+    context.socket_client = socket_client
     context.play_time = 0.0
     
     api = MapAPI(context)
@@ -101,6 +106,7 @@ def main():
         manager.draw(screen)
         pygame.display.flip()
         
+    socket_client.stop()
     pygame.quit()
     sys.exit()
 

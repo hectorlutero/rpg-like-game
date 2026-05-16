@@ -7,6 +7,7 @@ import './App.css'
 interface ElectronAPI {
   launchEngine: () => Promise<{ success: boolean; error?: string }>;
   onEngineLog: (callback: (data: string) => void) => () => void;
+  onEngineConnectionStatus: (callback: (status: string) => void) => () => void;
 }
 
 declare global {
@@ -18,13 +19,22 @@ declare global {
 function App() {
   const [count, setCount] = useState(0)
   const [logs, setLogs] = useState<string[]>([])
+  const [connectionStatus, setConnectionStatus] = useState<string>('disconnected')
   const terminalEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const removeListener = window.electronAPI.onEngineLog((data) => {
+    const removeLogListener = window.electronAPI.onEngineLog((data) => {
       setLogs((prev) => [...prev, data])
     })
-    return () => removeListener()
+    
+    const removeStatusListener = window.electronAPI.onEngineConnectionStatus((status) => {
+      setConnectionStatus(status)
+    })
+
+    return () => {
+      removeLogListener()
+      removeStatusListener()
+    }
   }, [])
 
   useEffect(() => {
@@ -50,7 +60,7 @@ function App() {
         <div>
           <h1>Forge Studio</h1>
           <p>
-            Control Center for The Forge Engine
+            Control Center for The Forge Engine | Status: <span style={{ color: connectionStatus === 'connected' ? '#4CAF50' : '#f44336' }}>{connectionStatus.toUpperCase()}</span>
           </p>
         </div>
         

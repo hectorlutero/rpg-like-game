@@ -7,4 +7,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('engine-log', subscription);
     return () => ipcRenderer.removeListener('engine-log', subscription);
   },
+  onEngineConnectionStatus: (callback: (status: string) => void) => {
+    const subscription = (_event: any, status: string) => callback(status);
+    ipcRenderer.on('engine-connection-status', subscription);
+    return () => ipcRenderer.removeListener('engine-connection-status', subscription);
+  },
 });

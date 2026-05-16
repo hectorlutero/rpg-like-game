@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { EngineOrchestrator } from './orchestrator';
 import { VenvManager } from './venv-manager';
+import { SocketManager } from './socket-manager';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,6 +12,7 @@ const projectRoot = path.join(__dirname, '../../../');
 let mainWindow: BrowserWindow | null = null;
 const orchestrator = new EngineOrchestrator();
 const venvManager = new VenvManager(projectRoot);
+const socketManager = new SocketManager();
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -31,6 +33,9 @@ function createWindow() {
 }
 
 app.whenReady().then(async () => {
+  // Start WebSocket server
+  socketManager.start();
+
   // Ensure venv is ready on startup
   try {
     await venvManager.ensureVenv();
@@ -65,4 +70,12 @@ ipcMain.handle('launch-engine', async () => {
 
 orchestrator.onLog((data) => {
   mainWindow?.webContents.send('engine-log', data);
+});
+
+socketManager.on('connected', () => {
+  mainWindow?.webContents.send('engine-connection-status', 'connected');
+});
+
+socketManager.on('disconnected', () => {
+  mainWindow?.webContents.send('engine-connection-status', 'disconnected');
 });
