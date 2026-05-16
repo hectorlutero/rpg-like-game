@@ -57,9 +57,31 @@ class DirectorEngine:
             
         try:
             self.current_action = self.active_script.send(signal)
+            self._handle_instant_actions()
         except StopIteration:
             self.active_script = None
             self.current_action = None
+
+    def _handle_instant_actions(self):
+        """Processes actions that don't take time (like setting flags) immediately."""
+        while self.current_action:
+            action_type = self.current_action[0]
+            if action_type == "flag":
+                _, name, value = self.current_action
+                self.api.set_flag(name, value)
+                try:
+                    self.current_action = self.active_script.send(None)
+                except StopIteration:
+                    self.active_script = None
+                    self.current_action = None
+                    break
+            elif action_type == "give_item":
+                # Give item is already instant in API but might yield a tuple
+                # If it yields a tuple, we might want to skip it here if it's considered instant
+                # For now let's focus on what the test needs
+                break
+            else:
+                break
 
     def update(self, dt):
         """Processes time-based actions (like movement)."""
@@ -86,6 +108,10 @@ class DirectorEngine:
                 ratio = (speed * dt) / dist
                 entity.position.x += dx * ratio
                 entity.position.y += dy * ratio
+        elif action_type == "wait":
+            self.current_action = ("wait", self.current_action[1] - dt)
+            if self.current_action[1] <= 0:
+                self.advance()
 
     def attach_combat(self, combat_manager):
         self.combat_manager = combat_manager

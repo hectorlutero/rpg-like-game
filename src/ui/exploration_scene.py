@@ -25,7 +25,7 @@ class ExplorationScene(Scene):
         self.interaction_manager = InteractionManager(self.context, self.manager)
         from src.ui.interaction_renderer import InteractionRenderer
         self.interaction_renderer = InteractionRenderer()
-        self.juice = JuiceService(self.particles, settings_manager=self.context.settings)
+        self.juice = JuiceService(self.particles, settings_manager=getattr(self.context, "settings", None))
         
         if map_path and self.context.orchestrator:
             print(f"Loading map: {map_path}")
@@ -63,7 +63,8 @@ class ExplorationScene(Scene):
         if self.fade_alpha > 0:
             return
 
-        if self.context.director.is_busy():
+        director = getattr(self.context, "director", None)
+        if director and director.is_busy():
             if self.interaction_manager.is_active:
                 self.interaction_manager.handle_event(event)
             return
@@ -127,7 +128,8 @@ class ExplorationScene(Scene):
             nm.update(dt)
 
         # Check for Director actions
-        if self.context.director.is_busy():
+        director = getattr(self.context, "director", None)
+        if director and director.is_busy():
             action = self.context.director.current_action
             if action:
                 if action[0] == "say" and not self.interaction_manager.is_active:
@@ -158,7 +160,9 @@ class ExplorationScene(Scene):
                 self._execute_transition()
             return
 
-        if not self.interaction_manager.is_active and not self.context.director.is_busy():
+        # Update everything if not blocked
+        director_busy = director.is_busy() if director else False
+        if not self.interaction_manager.is_active and not director_busy:
             # Update AI Reasoning
             orchestrator = getattr(self.context, "orchestrator", None)
             if orchestrator:

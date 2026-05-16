@@ -34,3 +34,19 @@ class GiveXPAction(QuestAction):
         if game_context and game_context.player:
             game_context.player.gain_xp(self.amount)
 
+class RollCreditsAction(QuestAction):
+    """Triggers the credits scene."""
+    def execute(self, context):
+        sm = context.get("scene_manager")
+        if sm:
+            from src.ui.credits_scene import CreditsScene
+            sm.push(CreditsScene(sm))
+
+class GameOverAction(QuestAction):
+    """Triggers the game over scene."""
+    def execute(self, context):
+        sm = context.get("scene_manager")
+        if sm:
+            from src.ui.game_over_scene import GameOverScene
+            sm.push(GameOverScene(sm))
+
