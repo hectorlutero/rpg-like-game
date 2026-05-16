@@ -2,12 +2,15 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { EngineOrchestrator } from './orchestrator';
+import { VenvManager } from './venv-manager';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const projectRoot = path.join(__dirname, '../../../');
 
 let mainWindow: BrowserWindow | null = null;
 const orchestrator = new EngineOrchestrator();
+const venvManager = new VenvManager(projectRoot);
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -27,7 +30,14 @@ function createWindow() {
   }
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  // Ensure venv is ready on startup
+  try {
+    await venvManager.ensureVenv();
+  } catch (error) {
+    console.error('Failed to initialize virtual environment:', error);
+  }
+  
   createWindow();
 
   app.on('activate', () => {
@@ -42,9 +52,11 @@ app.on('window-all-closed', () => {
 // Orchestrator IPC handlers
 ipcMain.handle('launch-engine', async () => {
   try {
-    // For now, we launch a simple echo or a python command if available
-    // In a real scenario, this would be the game engine
-    await orchestrator.launch('python3', ['src/main.py']);
+    await venvManager.ensureVenv();
+    const pythonPath = venvManager.getPythonExecutable();
+    const mainScript = path.join(projectRoot, 'src/main.py');
+    
+    await orchestrator.launch(pythonPath, [mainScript]);
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };

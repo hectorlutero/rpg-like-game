@@ -64,15 +64,31 @@ def test_title_navigation(title_setup):
 def test_new_game_starts_exploration(title_setup):
     title_scene, manager, context = title_setup
     
-    # Ensure map exists
-    os.makedirs("data/maps", exist_ok=True)
-    with open("data/maps/starting_village.json", "w") as f:
-        json.dump({"grid": [[0]], "tileset": "village"}, f)
+    # Backup existing map
+    map_path = "data/maps/starting_village.json"
+    backup_path = "data/maps/starting_village.json.bak"
+    map_existed = os.path.exists(map_path)
+    if map_existed:
+        import shutil
+        shutil.copy2(map_path, backup_path)
 
-    title_scene._start_new_game()
-    assert isinstance(manager.active_scene, ExplorationScene)
-    assert context.play_time == 0.0
-    assert context.player.name == "Herói"
+    # Ensure map directory exists
+    os.makedirs("data/maps", exist_ok=True)
+    try:
+        with open(map_path, "w") as f:
+            json.dump({"grid": [[0]], "tileset": "village"}, f)
+
+        title_scene._start_new_game()
+        assert isinstance(manager.active_scene, ExplorationScene)
+        assert context.play_time == 0.0
+        assert context.player.name == "Herói"
+    finally:
+        # Restore backup
+        if map_existed:
+            import shutil
+            shutil.move(backup_path, map_path)
+        elif os.path.exists(map_path):
+            os.remove(map_path)
 
 def test_load_menu_empty(title_setup):
     title_scene, _, _ = title_setup
