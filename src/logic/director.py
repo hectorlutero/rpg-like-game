@@ -32,6 +32,18 @@ class MapAPI:
         """Triggers non-blocking movement for an entity."""
         return ("move_to", entity, target_pos, speed)
 
+    def get_entity(self, entity_id):
+        """Finds an entity by ID or tag."""
+        if entity_id == "player":
+            return self.context.player
+        
+        # Check in world interactables
+        if hasattr(self.context, "world") and self.context.world:
+            for entity in self.context.world.interactables.values():
+                if getattr(entity, "entity_id", None) == entity_id or getattr(entity, "name", None) == entity_id:
+                    return entity
+        return None
+
 class DirectorEngine:
     def __init__(self, context, api):
         self.context = context
@@ -57,6 +69,22 @@ class DirectorEngine:
             
         try:
             self.current_action = self.active_script.send(signal)
+            
+            # Instant actions that don't block
+            if self.current_action:
+                action_type = self.current_action[0]
+                if action_type == "sound":
+                    sound_id = self.current_action[1]
+                    if self.context.audio:
+                        self.context.audio.play_sfx(sound_id)
+                    self.advance()
+                elif action_type == "flag":
+                    name, value = self.current_action[1], self.current_action[2]
+                    self.api.set_flag(name, value)
+                    self.advance()
+                elif action_type == "give_item":
+                    self.advance()
+                    
         except StopIteration:
             self.active_script = None
             self.current_action = None
@@ -86,6 +114,11 @@ class DirectorEngine:
                 ratio = (speed * dt) / dist
                 entity.position.x += dx * ratio
                 entity.position.y += dy * ratio
+
+        elif action_type == "wait":
+            self.current_action = ("wait", self.current_action[1] - dt)
+            if self.current_action[1] <= 0:
+                self.advance()
 
     def attach_combat(self, combat_manager):
         self.combat_manager = combat_manager
