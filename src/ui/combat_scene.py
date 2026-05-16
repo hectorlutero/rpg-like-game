@@ -14,7 +14,7 @@ class CombatScene(Scene):
         self.enemy_world_pos = enemy_world_pos 
         self.ui = CombatUI(self.manager.context.screen if hasattr(self.manager.context, 'screen') else None)
         self.particles = ParticleManager()
-        self.juice = JuiceService(self.particles)
+        self.juice = JuiceService(self.particles, settings_manager=self.context.settings)
         
         # Gerenciador de Navegação do Combate
         self.main_options = ["Attack", "Skill", "Magic", "Item", "Wait", "Flee"]
@@ -158,9 +158,9 @@ class CombatScene(Scene):
         
         elif self.combat_manager.winner == "Enemies":
             print("Game Over!")
-            # Reset simples (Teleporte para o início e cura)
-            self.context.player.hp = self.context.player.max_hp
-            self.context.player.position.x, self.context.player.position.y = 64, 64
+            from src.ui.game_over_scene import GameOverScene
+            self.manager.change_scene(GameOverScene(self.manager))
+            return # Don't pop, we changed the whole stack
 
         # Volta para o mapa
         self.manager.pop()

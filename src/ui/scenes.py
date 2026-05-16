@@ -10,6 +10,7 @@ class GameContext:
         self.party = [player]
         self.save_manager = None # Será injetado no main
         self.orchestrator = None # Injetado no main
+        self.settings = None # Injetado no main
         self.running = True
         self.global_state = GlobalState()
         self.director = None # Injetado no main

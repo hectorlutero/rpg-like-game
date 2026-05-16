@@ -4,18 +4,27 @@ import os
 import json
 
 class SoundManager:
-    def __init__(self, config_path=None):
+    def __init__(self, config_path=None, settings_manager=None):
         self.enabled = False
         self.current_track = None
         self.current_ambient = None
         self.ambient_channel = None
         self.tracks = {}
         self.sfx_map = {}
+        self.settings = settings_manager
+        
+        # Default volumes
         self.volumes = {
             "master": 1.0,
             "music": 1.0,
             "sfx": 1.0
         }
+        
+        # Load volumes from settings if available
+        if self.settings:
+            self.volumes["master"] = self.settings.get("volume_master", 1.0)
+            self.volumes["music"] = self.settings.get("volume_music", 1.0)
+            self.volumes["sfx"] = self.settings.get("volume_sfx", 1.0)
         
         try:
             if not pygame.mixer.get_init():
@@ -135,6 +144,11 @@ class SoundManager:
         clamped_value = max(0.0, min(1.0, value))
         self.volumes[group] = clamped_value
         
+        # Persist to settings
+        if self.settings:
+            setting_key = f"volume_{group}"
+            self.settings.set(setting_key, clamped_value, save=True)
+
         if self.enabled:
             if group == "music":
                 pygame.mixer.music.set_volume(clamped_value * self.volumes["master"])

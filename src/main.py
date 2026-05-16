@@ -3,11 +3,11 @@ import sys
 import os
 
 from src.models.character import Character
-from src.models.classes import Warrior, Mage, Rogue
-from src.models.world import World, Position
+from src.models.classes import Warrior
+from src.models.world import World
 from src.models.persistence import SaveManager
 from src.ui.scenes import GameContext, SceneManager
-from src.ui.exploration_scene import ExplorationScene
+from src.ui.title_scene import TitleScene
 from src.core.registry import EntityRegistry
 from src.core.orchestrator import WorldOrchestrator
 from src.core.state import GlobalState
@@ -26,56 +26,22 @@ def main():
     # --- 1. System Init ---
     registry = EntityRegistry("data/entities.json")
     save_manager = SaveManager("savegame")
-    save_data = save_manager.load_game()
     signal_bus = SignalBus()
     audio = SoundManager("data/audio_config.json")
     signal_bus.subscribe_all(audio.on_signal)
     
-    if save_data and 'audio' in save_data:
-        for group, vol in save_data['audio'].items():
+    # Try to load audio settings from last save (slot 0)
+    last_save = save_manager.load_game(0)
+    if last_save and 'audio' in last_save:
+        for group, vol in last_save['audio'].items():
             audio.set_volume(group, vol)
     
-    # --- 2. State & Player Init ---
-    player = None
+    # --- 2. Minimal State Init for Title Screen ---
     global_state = GlobalState()
+    # Dummy player and world for context initialization
+    player = Character("Herói", Warrior())
+    world = World([[1]*10]*10) # Minimal dummy world
     
-    if save_data:
-        # Load Global State
-        if 'global_state' in save_data:
-            global_state = GlobalState.from_dict(save_data['global_state'])
-        elif 'opened_chests' in save_data:
-            for cid in save_data['opened_chests']:
-                global_state.set_entity_delta(cid, {"_is_open": True})
-        
-        # Load Player
-        char_class = save_manager.class_map.get(save_data.get('class', 'Warrior'), Warrior)()
-        player = Character(save_data['name'], char_class, level=save_data['level'])
-        player.hp = save_data['hp']
-        player.xp = save_data['xp']
-        player.energy = save_data.get('energy', 3)
-        player.gold = save_data.get('gold', 0)
-        player.skills = set(save_data.get('skills', []))
-        player.inventory.items = save_data.get('inventory', [])
-        
-        # Load Equipment
-        from src.models.items import EQUIPMENT_DATA
-        eq_data = save_data.get('equipment', {})
-        for slot, item_name in eq_data.items():
-            if item_name in EQUIPMENT_DATA:
-                player.equipment[slot] = EQUIPMENT_DATA[item_name]
-
-        player.position.x = save_data['position']['x']
-        player.position.y = save_data['position']['y']
-        initial_play_time = save_data.get('play_time', 0.0)
-    else:
-        # New Game
-        player = Character("Herói", Warrior())
-        player.position.x, player.position.y = 64, 64
-        player.gold = 50
-        from src.models.items import EQUIPMENT_DATA
-        player.equip_item(EQUIPMENT_DATA["Espada de Ferro"])
-        initial_play_time = 0.0
-
     quest_manager = QuestManager(global_state, signal_bus)
     quest_manager.load_quests("data/quests.json")
     signal_bus.subscribe_all(quest_manager.on_event)
@@ -86,10 +52,6 @@ def main():
 
     # --- 3. World & Orchestration ---
     orchestrator = WorldOrchestrator(registry, global_state)
-    world = orchestrator.load_map("data/maps/starting_village.json")
-    if not world:
-        # Fallback if map file is missing
-        world = World([[1]*25] + [[1]+[0]*23+[1]]*18 + [[1]*25])
         
     # --- 4. Context & Director ---
     context = GameContext(player, world)
@@ -101,7 +63,7 @@ def main():
     context.quest_manager = quest_manager
     context.notification_manager = notification_manager
     context.audio = audio
-    context.play_time = initial_play_time
+    context.play_time = 0.0
     
     api = MapAPI(context)
     director = DirectorEngine(context, api)
@@ -112,16 +74,12 @@ def main():
     manager = SceneManager(context)
     context.scene_manager = manager
     
-    # --- 5. Initial Scene ---
-    # We find an NPC to pass to ExplorationScene (compatibility)
-    # This will be refactored further in the future
-    initial_npc = world.get_interactable_at(12, 9)
-    manager.push(ExplorationScene(manager, initial_npc, None))
+    # --- 5. Initial Scene: Title Screen ---
+    manager.push(TitleScene(manager))
     
     # --- 6. Game Loop ---
     while context.running:
         dt = clock.tick(60) / 1000.0
-        context.play_time += dt
         
         # Events
         for event in pygame.event.get():
@@ -131,10 +89,15 @@ def main():
         
         # Update
         manager.update(dt)
-        director.update(dt)
+        
+        # Only advance time and director logic if in Exploration (in-game)
+        from src.ui.exploration_scene import ExplorationScene
+        if isinstance(manager.active_scene, ExplorationScene):
+            context.play_time += dt
+            director.update(dt)
         
         # Draw
-        screen.fill((30, 30, 30))
+        screen.fill((0, 0, 0))
         manager.draw(screen)
         pygame.display.flip()
         

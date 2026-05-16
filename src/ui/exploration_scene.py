@@ -25,7 +25,7 @@ class ExplorationScene(Scene):
         self.interaction_manager = InteractionManager(self.context, self.manager)
         from src.ui.interaction_renderer import InteractionRenderer
         self.interaction_renderer = InteractionRenderer()
-        self.juice = JuiceService(self.particles)
+        self.juice = JuiceService(self.particles, settings_manager=self.context.settings)
         
         if map_path and self.context.orchestrator:
             print(f"Loading map: {map_path}")
@@ -61,6 +61,11 @@ class ExplorationScene(Scene):
 
     def handle_event(self, event):
         if self.fade_alpha > 0:
+            return
+
+        if self.context.director.is_busy():
+            if self.interaction_manager.is_active:
+                self.interaction_manager.handle_event(event)
             return
 
         if self.interaction_manager.is_active:
@@ -121,6 +126,18 @@ class ExplorationScene(Scene):
         if nm:
             nm.update(dt)
 
+        # Check for Director actions
+        if self.context.director.is_busy():
+            action = self.context.director.current_action
+            if action:
+                if action[0] == "say" and not self.interaction_manager.is_active:
+                    self.interaction_manager.show_dialogue("Director", action[1])
+                elif action[0] == "choice" and not self.interaction_manager.is_active:
+                    from src.models.dialogue import DialogueManager
+                    # Simple choice wrapper for DialogueManager
+                    dm = DialogueManager({"start": {"text": "Escolha:", "choices": {c: "start" for c in action[1]}}})
+                    self.interaction_manager.show_dialogue("Director", dm)
+
         # Process any pending transition requests from interaction
         if self.interaction_manager.requested_transition:
             req = self.interaction_manager.requested_transition
@@ -141,7 +158,7 @@ class ExplorationScene(Scene):
                 self._execute_transition()
             return
 
-        if not self.interaction_manager.is_active:
+        if not self.interaction_manager.is_active and not self.context.director.is_busy():
             # Update AI Reasoning
             orchestrator = getattr(self.context, "orchestrator", None)
             if orchestrator:

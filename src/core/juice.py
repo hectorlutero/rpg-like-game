@@ -1,15 +1,18 @@
 import random
 
 class JuiceService:
-    def __init__(self, particle_manager=None):
+    def __init__(self, particle_manager=None, settings_manager=None):
         self.trauma = 0.0
         self.flash_alpha = 0
         self.flash_color = (255, 255, 255)
         self.hit_stop_time = 0.0
         self.camera_offset = [0, 0]
         self.particles = particle_manager
+        self.settings = settings_manager
 
     def shake(self, amount):
+        if self.settings and not self.settings.get("screen_shake", True):
+            return
         self.trauma = min(1.0, self.trauma + amount)
 
     def flash(self, color=(255, 255, 255), duration_alpha=255):
