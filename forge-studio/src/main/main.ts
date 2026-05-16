@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import { EngineOrchestrator } from './orchestrator';
 import { VenvManager } from './venv-manager';
 import { SocketManager } from './socket-manager';
+import { SmartDataManager } from './data-manager';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,6 +14,7 @@ let mainWindow: BrowserWindow | null = null;
 const orchestrator = new EngineOrchestrator();
 const venvManager = new VenvManager(projectRoot);
 const socketManager = new SocketManager();
+const dataManager = new SmartDataManager();
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -64,6 +66,22 @@ ipcMain.handle('launch-engine', async () => {
     await orchestrator.launch(pythonPath, [mainScript]);
     return { success: true };
   } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Data persistence IPC handlers
+ipcMain.handle('smart-save', async (_event, { filePath, data }) => {
+  try {
+    // Resolve path relative to project root if it's not absolute
+    const absolutePath = path.isAbsolute(filePath) 
+      ? filePath 
+      : path.join(projectRoot, filePath);
+      
+    await dataManager.smartSave(absolutePath, data);
+    return { success: true };
+  } catch (error: any) {
+    console.error('Smart save failed:', error);
     return { success: false, error: error.message };
   }
 });
